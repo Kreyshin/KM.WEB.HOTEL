@@ -71,10 +71,10 @@ function abrirModulo(id: string) {
           :aria-current="moduloActivo?.id === modulo.id ? 'true' : undefined"
           @click="abrirModulo(modulo.id)"
         >
-          <!-- Marca del módulo activo: filete de arena, forma además de color. -->
+          <!-- Marca del módulo activo: filete de turquesa, forma además de color. -->
           <span
             v-if="moduloActivo?.id === modulo.id"
-            class="absolute top-1/2 left-0 h-8 w-[3px] -translate-y-1/2 rounded-r-full bg-arena"
+            class="absolute top-1/2 left-0 h-8 w-[3px] -translate-y-1/2 rounded-r-full bg-turquesa"
             aria-hidden="true"
           />
           <svg

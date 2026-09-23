@@ -52,7 +52,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', alTeclear))
     aria-label="Secciones del módulo"
   >
     <div class="w-[var(--hs-menu-ancho)] max-w-[calc(100vw-var(--hs-rail-ancho))] px-5 py-7">
-      <p class="hs-etiqueta text-arena-texto">{{ modulo?.etiqueta }}</p>
+      <p class="hs-etiqueta text-turquesa-texto">{{ modulo?.etiqueta }}</p>
       <div class="hs-filete mt-3 mb-5" role="presentation" />
 
       <ul class="flex flex-col gap-0.5">
@@ -82,6 +82,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', alTeclear))
 .hs-seccion-activa {
   background-color: var(--hs-selection);
   color: var(--hs-text);
-  box-shadow: inset 3px 0 0 0 var(--hs-arena-500);
+  box-shadow: inset 3px 0 0 0 var(--hs-turquesa-500);
 }
 </style>

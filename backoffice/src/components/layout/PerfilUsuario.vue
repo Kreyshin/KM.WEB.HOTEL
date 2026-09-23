@@ -46,7 +46,7 @@ async function cerrarSesion() {
   <div ref="contenedor" class="relative mt-auto">
     <button
       type="button"
-      class="grid size-11 place-items-center rounded-full border border-arena/60 bg-white/5 text-xs font-semibold text-rail-tinta transition-colors hover:bg-white/12"
+      class="grid size-11 place-items-center rounded-full border border-turquesa/60 bg-white/5 text-xs font-semibold text-rail-tinta transition-colors hover:bg-white/12"
       :aria-expanded="abierto"
       aria-label="Abrir opciones de usuario"
       @click="abierto = !abierto"
@@ -63,7 +63,7 @@ async function cerrarSesion() {
       <div class="border-b border-linea px-4 py-3.5">
         <p class="truncate text-sm font-semibold text-tinta">{{ auth.usuario?.nombre }}</p>
         <p class="truncate text-xs text-tenue">{{ auth.usuario?.email }}</p>
-        <p v-if="auth.rol" class="hs-etiqueta mt-2 text-arena-texto">
+        <p v-if="auth.rol" class="hs-etiqueta mt-2 text-turquesa-texto">
           {{ etiquetasRol[auth.rol] }}
         </p>
       </div>
@@ -91,7 +91,7 @@ async function cerrarSesion() {
         @click="abrirDatosEjemplo"
       >
         <span>Datos de ejemplo</span>
-        <span class="hs-etiqueta text-arena-texto">Mock</span>
+        <span class="hs-etiqueta text-turquesa-texto">Mock</span>
       </button>
 
       <button

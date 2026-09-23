@@ -10,7 +10,7 @@ withDefaults(defineProps<{ tono?: TonoHotel; punto?: boolean }>(), {
 const clases: Record<TonoHotel, string> = {
   neutro: 'hs-tono-neutro',
   azul: 'hs-tono-azul',
-  arena: 'hs-tono-arena',
+  turquesa: 'hs-tono-turquesa',
   coral: 'hs-tono-coral',
   salvia: 'hs-tono-salvia',
 }

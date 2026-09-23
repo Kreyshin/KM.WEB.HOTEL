@@ -927,7 +927,7 @@ function semilla(): Esquema {
         hasta: dia(28),
         factor: 1.4,
         minimoNoches: 2,
-        color: 'arena',
+        color: 'turquesa',
         activa: true,
       },
       {

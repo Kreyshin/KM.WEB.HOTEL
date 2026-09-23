@@ -74,7 +74,7 @@ function esFinDeSemana(fecha: string) {
               :key="f"
               scope="col"
               class="hs-etiqueta px-2 py-3 text-center"
-              :class="esFinDeSemana(f) ? 'text-arena-texto' : 'text-tenue'"
+              :class="esFinDeSemana(f) ? 'text-turquesa-texto' : 'text-tenue'"
             >
               {{ fechaCorta(f) }}
             </th>
@@ -107,7 +107,7 @@ function esFinDeSemana(fecha: string) {
               <span
                 v-if="celda.factor !== 1"
                 class="hs-etiqueta block"
-                :class="celda.factor > 1 ? 'text-arena-texto' : 'text-tenue'"
+                :class="celda.factor > 1 ? 'text-turquesa-texto' : 'text-tenue'"
               >
                 {{ celda.factor > 1 ? '+' : '' }}{{ Math.round((celda.factor - 1) * 100) }}%
               </span>

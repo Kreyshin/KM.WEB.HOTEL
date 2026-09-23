@@ -162,17 +162,17 @@ const incidenciasBloqueantes = computed(
 
         <div class="grid flex-1 gap-6 sm:grid-cols-3">
           <div>
-            <p class="hs-etiqueta text-arena-texto">Llegan hoy</p>
+            <p class="hs-etiqueta text-turquesa-texto">Llegan hoy</p>
             <p class="hs-cifra mt-2 text-tinta">{{ llegadas.length }}</p>
             <p class="mt-1 text-xs text-tenue">{{ formatearSoles(ingresoPrevisto) }} previstos</p>
           </div>
           <div>
-            <p class="hs-etiqueta text-arena-texto">Salen hoy</p>
+            <p class="hs-etiqueta text-turquesa-texto">Salen hoy</p>
             <p class="hs-cifra mt-2 text-tinta">{{ salidas.length }}</p>
             <p class="mt-1 text-xs text-tenue">Cada una abre una tarea de salida</p>
           </div>
           <div>
-            <p class="hs-etiqueta text-arena-texto">Pisos pendientes</p>
+            <p class="hs-etiqueta text-turquesa-texto">Pisos pendientes</p>
             <p class="hs-cifra mt-2 text-tinta">{{ pendientesLimpieza.length }}</p>
             <p class="mt-1 text-xs text-tenue">≈ {{ minutosPendientes }} min de trabajo</p>
           </div>
@@ -239,7 +239,7 @@ const incidenciasBloqueantes = computed(
                 {{ r.noches }} noche{{ r.noches === 1 ? '' : 's' }} · {{ r.codigo }}
               </span>
             </span>
-            <KmBadge tono="arena">Por salir</KmBadge>
+            <KmBadge tono="turquesa">Por salir</KmBadge>
           </li>
         </ul>
       </section>

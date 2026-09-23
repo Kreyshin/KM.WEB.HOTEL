@@ -24,7 +24,7 @@ const roles: OpcionSelect[] = (['admin', 'recepcion', 'gobernanta', 'mantenimien
 
 const tonoRol: Record<Rol, TonoHotel> = {
   admin: 'azul',
-  recepcion: 'arena',
+  recepcion: 'turquesa',
   gobernanta: 'salvia',
   mantenimiento: 'neutro',
 }

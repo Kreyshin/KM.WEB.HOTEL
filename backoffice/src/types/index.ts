@@ -353,7 +353,7 @@ export interface Temporada {
 export type NuevaTemporada = Omit<Temporada, 'id'>
 
 /** Tono con el que la temporada se pinta en el calendario de tarifas. */
-export type TonoTarifa = 'azul' | 'arena' | 'coral' | 'salvia'
+export type TonoTarifa = 'azul' | 'turquesa' | 'coral' | 'salvia'
 
 /** Precio publicado de un tipo de habitación en un canal concreto. */
 export interface TarifaCanal {

@@ -83,7 +83,7 @@ function validar(h: NuevoHuesped): Record<string, string> {
     </template>
 
     <template #col-frecuente="{ fila }">
-      <KmBadge v-if="fila.frecuente" tono="arena" punto>
+      <KmBadge v-if="fila.frecuente" tono="turquesa" punto>
         Frecuente · {{ fila.nochesAcumuladas ?? 0 }} noches
       </KmBadge>
       <span v-else class="text-sm text-tenue">—</span>

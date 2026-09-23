@@ -56,7 +56,7 @@ function validar(l: NuevoLocal): Record<string, string> {
   >
     <template #col-nombre="{ fila }">
       <span class="font-medium text-tinta">{{ fila.nombre }}</span>
-      <span v-if="fila.estrellas" class="block text-xs text-arena-texto">
+      <span v-if="fila.estrellas" class="block text-xs text-turquesa-texto">
         {{ '★'.repeat(fila.estrellas) }}
       </span>
     </template>

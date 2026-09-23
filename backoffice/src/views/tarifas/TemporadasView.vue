@@ -29,7 +29,7 @@ const columnas: ColumnaTabla[] = [
 
 const tonos: Record<Temporada['color'], TonoHotel> = {
   azul: 'azul',
-  arena: 'arena',
+  turquesa: 'turquesa',
   coral: 'coral',
   salvia: 'salvia',
 }
@@ -54,7 +54,7 @@ const vigente = computed(() =>
   <div class="flex w-full flex-col gap-6">
     <div v-if="vigente" class="hs-panel flex flex-wrap items-center gap-4 p-6">
       <div>
-        <p class="hs-etiqueta text-arena-texto">Temporada vigente</p>
+        <p class="hs-etiqueta text-turquesa-texto">Temporada vigente</p>
         <p class="hs-titulo-pagina mt-1 text-tinta">{{ vigente.nombre }}</p>
       </div>
       <div class="hs-filete h-px flex-1" role="presentation" />

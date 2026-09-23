@@ -44,7 +44,7 @@ onMounted(() => {
         <nav v-if="modulo" aria-label="Ubicación" class="mb-0.5">
           <ol class="flex items-center gap-1.5 text-xs text-tenue">
             <li>{{ modulo.etiqueta }}</li>
-            <li aria-hidden="true" class="text-arena-texto">›</li>
+            <li aria-hidden="true" class="text-turquesa-texto">›</li>
             <li aria-current="page" class="truncate">{{ route.meta.titulo }}</li>
           </ol>
         </nav>

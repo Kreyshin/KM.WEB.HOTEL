@@ -23,11 +23,11 @@ export const etiquetaOcupacion: Record<EstadoOcupacion, string> = {
   bloqueada: 'Bloqueada',
 }
 
-/** Azul para lo disponible, coral para lo ocupado, arena para lo comprometido. */
+/** Azul para lo disponible, coral para lo ocupado, turquesa para lo comprometido. */
 export const tonoOcupacion: Record<EstadoOcupacion, TonoHotel> = {
   libre: 'azul',
   ocupada: 'coral',
-  reservada: 'arena',
+  reservada: 'turquesa',
   bloqueada: 'neutro',
 }
 
@@ -51,7 +51,7 @@ export const tonoLimpieza: Record<EstadoLimpieza, TonoHotel> = {
   limpia: 'salvia',
   sucia: 'coral',
   enLimpieza: 'azul',
-  inspeccion: 'arena',
+  inspeccion: 'turquesa',
   fueraServicio: 'neutro',
 }
 
@@ -78,7 +78,7 @@ export const glifoOcupacion: Record<EstadoOcupacion, string> = {
 export const clasePlanoOcupacion: Record<EstadoOcupacion, string> = {
   libre: 'hs-tono-azul',
   ocupada: 'hs-tono-coral',
-  reservada: 'hs-tono-arena',
+  reservada: 'hs-tono-turquesa',
   bloqueada: 'hs-tono-neutro',
 }
 
@@ -103,7 +103,7 @@ export const etiquetaReserva: Record<EstadoReserva, string> = {
 }
 
 export const tonoReserva: Record<EstadoReserva, TonoHotel> = {
-  pendiente: 'arena',
+  pendiente: 'turquesa',
   confirmada: 'azul',
   enCasa: 'salvia',
   salida: 'neutro',
@@ -125,7 +125,7 @@ export const etiquetaTarea: Record<EstadoTarea, string> = {
 export const tonoTarea: Record<EstadoTarea, TonoHotel> = {
   pendiente: 'coral',
   enCurso: 'azul',
-  revisar: 'arena',
+  revisar: 'turquesa',
   terminada: 'salvia',
 }
 
@@ -154,6 +154,6 @@ export const etiquetaPrioridad: Record<Prioridad, string> = {
 
 export const tonoPrioridad: Record<Prioridad, TonoHotel> = {
   normal: 'neutro',
-  alta: 'arena',
+  alta: 'turquesa',
   urgente: 'coral',
 }
