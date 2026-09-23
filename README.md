@@ -112,7 +112,7 @@ Misma **estructura** que el resto de verticales Karma —barra de módulos de 92
 | | Restaurante | Hotelería |
 | --- | --- | --- |
 | Paleta | Naranja fuego, grafito, plata | Turquesa → azul, plata, negro azulado |
-| Tipografía | Fraunces + Inter | Playfair Display + Manrope |
+| Tipografía | Fraunces + Inter | Fraunces + Inter (compartida) |
 | Radios | 8 / 14 / 20 px | 12 / 20 / 28 px |
 | Portada | Rejilla de indicadores del servicio | Franja de jornada: llegadas, salidas y pisos |
 | Isotipo | Llama | Techo y cama, del activo de marca |
