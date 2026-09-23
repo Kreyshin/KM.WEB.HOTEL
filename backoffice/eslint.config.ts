@@ -13,9 +13,8 @@ export default defineConfigWithVueTs(
     ignores: [
       '**/dist/**',
       '**/dist-demo/**',
-      'playwright-report/**',
-      'test-results/**',
-      '',
+      'docs/.vitepress/cache/**',
+      'docs/.vitepress/dist/**',
       '**/coverage/**',
       '**/node_modules/**',
       // Identidad de plataforma preservada: no se edita, no se audita.

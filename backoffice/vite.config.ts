@@ -5,11 +5,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 /**
  * `vite build --mode demo` genera la demo pública para GitHub Pages: vive bajo
- * `/KM.WEB.HOTEL/` y usa rutas con hash, porque Pages no sabe servir el
+ * `/KM.WEB.HOTEL/demo/` y usa rutas con hash, porque Pages no sabe servir el
  * `index.html` de una SPA en subrutas.
  */
 export default defineConfig(({ mode }) => ({
-  base: mode === 'demo' ? '/KM.WEB.HOTEL/' : '/',
+  base: mode === 'demo' ? '/KM.WEB.HOTEL/demo/' : '/',
   plugins: [vue(), tailwindcss()],
   resolve: {
     alias: {

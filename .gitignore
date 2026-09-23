@@ -45,6 +45,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Demo generada
+# Demo y documentación generadas
 dist-demo/
+backoffice/docs/.vitepress/cache/
+backoffice/docs/.vitepress/dist/
 site/
