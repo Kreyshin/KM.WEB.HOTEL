@@ -1,12 +1,15 @@
 # KM.Hotel · Alba
 
-[![Demo](https://github.com/Kreyshin/KM.WEB.HOTEL/actions/workflows/pages.yml/badge.svg)](https://github.com/Kreyshin/KM.WEB.HOTEL/actions/workflows/pages.yml)
+[![Docs y demo](https://github.com/Kreyshin/KM.WEB.HOTEL/actions/workflows/pages.yml/badge.svg)](https://github.com/Kreyshin/KM.WEB.HOTEL/actions/workflows/pages.yml)
 
 Back office para hotelería y hospedaje: habitaciones, reservas, recepción, housekeeping, mantenimiento, tarifas por temporada y comprobantes. **Un sistema Karma Systems.**
 
 | | |
 | --- | --- |
-| 🖥️ **Demo** | [kreyshin.github.io/KM.WEB.HOTEL](https://kreyshin.github.io/KM.WEB.HOTEL/) |
+| 📚 **Documentación** | [kreyshin.github.io/KM.WEB.HOTEL](https://kreyshin.github.io/KM.WEB.HOTEL/) |
+| 🖥️ **Demo** | [kreyshin.github.io/KM.WEB.HOTEL/demo](https://kreyshin.github.io/KM.WEB.HOTEL/demo/) |
+
+> La documentación es **funcional**, no técnica: explica el vocabulario, las pantallas y los procesos del hotel. Para el detalle de arquitectura, el código manda.
 
 > En la demo el acceso viene precargado y acepta cualquier contraseña. Los datos viven en tu navegador y se reinician desde **Perfil → Datos de ejemplo**.
 
@@ -58,6 +61,7 @@ Requisitos: **Node 24** o superior.
 cd backoffice
 npm install
 npm run dev        # app en http://localhost:5173
+npm run docs:dev   # documentación en local
 ```
 
 | Script | Qué hace |
@@ -66,6 +70,7 @@ npm run dev        # app en http://localhost:5173
 | `npm run verify` | Formato, lint, tipos y pruebas. **Debe pasar antes de cada commit** |
 | `npm run build` | Build de producción |
 | `npm run build:demo` | Build de la demo para GitHub Pages |
+| `npm run docs:build` | Build de la documentación |
 
 ### Cuentas de prueba
 
@@ -80,8 +85,9 @@ npm run dev        # app en http://localhost:5173
 
 ```text
 .
-├─ .github/workflows/pages.yml   Publica la demo en GitHub Pages
+├─ .github/workflows/pages.yml   Publica documentación y demo en GitHub Pages
 └─ backoffice/
+   ├─ docs/                      Documentación funcional (VitePress)
    └─ src/
       ├─ assets/                 Sistema de diseño (main.css) e identidad Karma
       ├─ components/
@@ -105,10 +111,11 @@ Misma **estructura** que el resto de verticales Karma —barra de módulos de 92
 
 | | Restaurante | Hotelería |
 | --- | --- | --- |
-| Paleta | Naranja fuego, grafito, plata | Azul noche, arena dorada, lino |
+| Paleta | Naranja fuego, grafito, plata | Turquesa → azul, plata, negro azulado |
 | Tipografía | Fraunces + Inter | Playfair Display + Manrope |
 | Radios | 8 / 14 / 20 px | 12 / 20 / 28 px |
 | Portada | Rejilla de indicadores del servicio | Franja de jornada: llegadas, salidas y pisos |
+| Isotipo | Llama | Techo y cama, del activo de marca |
 
 Los tokens viven en `src/assets/main.css` con el prefijo `--hs-*` y se exponen a Tailwind por `@theme inline`. La identidad de plataforma Karma se conserva íntegra en `src/assets/karma/` y sigue apareciendo como atribución.
 

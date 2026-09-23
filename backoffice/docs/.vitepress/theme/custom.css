@@ -1,0 +1,172 @@
+/*
+ * La documentación comparte la identidad de la vertical: turquesa → azul sobre
+ * plata y negro azulado, tomada del isotipo.
+ */
+
+:root {
+  --vp-font-family-base: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --vp-font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+
+  --vp-c-bg: #eef1f5;
+  --vp-c-bg-alt: #e4e9f0;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-bg-soft: #f6f8fb;
+  --vp-c-text-1: #0f1724;
+  --vp-c-text-2: #5b6673;
+  --vp-c-text-3: #838e9c;
+  --vp-c-divider: #dbe1e9;
+  --vp-c-gutter: #e2e7ee;
+
+  --vp-c-brand-1: #0a53cf;
+  --vp-c-brand-2: #0e3a96;
+  --vp-c-brand-3: #00aed6;
+  --vp-c-brand-soft: rgb(10 83 207 / 0.12);
+
+  --vp-button-brand-bg: #0a53cf;
+  --vp-button-brand-hover-bg: #0e3a96;
+  --vp-button-brand-active-bg: #10203c;
+  --vp-button-brand-text: #ffffff;
+
+  --vp-code-color: #046b86;
+  --vp-code-bg: rgb(10 83 207 / 0.07);
+
+  --vp-custom-block-tip-border: #00aed6;
+  --vp-custom-block-tip-bg: rgb(0 174 214 / 0.09);
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(120deg, #10cff5 10%, #0a53cf 58%, #10203c 96%);
+  --vp-home-hero-image-background-image: radial-gradient(
+    circle,
+    rgb(16 207 245 / 0.28),
+    transparent 68%
+  );
+  --vp-home-hero-image-filter: blur(48px);
+}
+
+.dark {
+  --vp-c-bg: #080d16;
+  --vp-c-bg-alt: #05080f;
+  --vp-c-bg-elv: #111827;
+  --vp-c-bg-soft: #172032;
+  --vp-c-text-1: #eef2f7;
+  --vp-c-text-2: #9aa6b6;
+  --vp-c-text-3: #74818f;
+  --vp-c-divider: #263144;
+  --vp-c-gutter: #1c2434;
+
+  --vp-c-brand-1: #4e9bf7;
+  --vp-c-brand-2: #22c9f2;
+  --vp-c-brand-3: #00aed6;
+  --vp-c-brand-soft: rgb(34 201 242 / 0.16);
+
+  --vp-button-brand-bg: #0a53cf;
+  --vp-button-brand-hover-bg: #1268ec;
+  --vp-button-brand-active-bg: #4e9bf7;
+
+  --vp-code-color: #22c9f2;
+  --vp-code-bg: rgb(34 201 242 / 0.1);
+
+  --vp-home-hero-name-background: linear-gradient(120deg, #22c9f2 8%, #4e9bf7 54%, #dbe4f0 96%);
+  --vp-home-hero-image-background-image: radial-gradient(
+    circle,
+    rgb(34 201 242 / 0.3),
+    transparent 70%
+  );
+}
+
+/* Títulos en la serif de la vertical, igual que en el producto. */
+.VPHero .name,
+.vp-doc h1,
+.vp-doc h2 {
+  font-family: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  letter-spacing: -0.012em;
+}
+
+/* Geometría blanda, el rasgo de la vertical. */
+.VPButton,
+.VPFeature,
+.vp-doc .custom-block,
+.VPImage {
+  border-radius: 14px;
+}
+
+.VPFeature {
+  border-radius: 20px;
+}
+
+/*
+ * Tablas: en esta documentación casi todo es una tabla de estados o de
+ * responsabilidades, así que conviene que respiren.
+ */
+.vp-doc table {
+  display: table;
+  width: 100%;
+}
+
+.vp-doc th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--vp-c-text-2);
+}
+
+.vp-doc td,
+.vp-doc th {
+  padding: 10px 14px;
+}
+
+/*
+ * Fichas de estado: el punto de color delante de un estado, para que el texto
+ * no sea lo único que lo distinga (misma regla que en el producto).
+ */
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.estado::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.estado-libre {
+  color: #0a53cf;
+}
+.estado-ocupada {
+  color: #c0392f;
+}
+.estado-reservada {
+  color: #0089ab;
+}
+.estado-limpia {
+  color: #12796b;
+}
+.estado-sucia {
+  color: #c0392f;
+}
+.estado-bloqueada {
+  color: var(--vp-c-text-2);
+}
+
+.dark .estado-libre {
+  color: #4e9bf7;
+}
+.dark .estado-ocupada {
+  color: #f2a49b;
+}
+.dark .estado-reservada {
+  color: #22c9f2;
+}
+.dark .estado-limpia {
+  color: #79d3c4;
+}
+.dark .estado-sucia {
+  color: #f2a49b;
+}
