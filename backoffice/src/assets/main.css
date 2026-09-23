@@ -1,0 +1,519 @@
+@import 'tailwindcss';
+
+/* Fuentes explícitas: la documentación (VitePress) compila desde docs/ y no vería src/. */
+@source '../';
+@source '../../docs';
+
+/* =============================================================================
+ * Hotelería — sistema de diseño propio
+ *
+ * Identidad: azul noche, arena dorada y lino. Donde Restaurante usa el fuego
+ * del servicio, Hospedaje usa la calma de la habitación: superficies cálidas
+ * de lino, cromo azul profundo y un metal arena para el detalle.
+ *
+ * Tres rasgos separan esta vertical de sus hermanas sin romper la estructura
+ * compartida (barra de módulos + menú de secciones + área de trabajo):
+ *   1. Geometría más blanda: radios grandes (12/20/28 px) en todos los niveles.
+ *   2. Tipografía de portada: Playfair en títulos y cifras, Manrope en la UI.
+ *   3. Paleta fría y cálida a la vez: azul noche sobre lino, nunca gris puro.
+ *
+ * La identidad de plataforma Karma se conserva íntegra en
+ * `src/assets/karma/karma-identidad.css` y en `src/components/marca/KarmaLogo.vue`,
+ * que sigue apareciendo como atribución («Un sistema Karma Systems»).
+ *
+ * Escalas: 900 = más oscuro, 50 = más claro.
+ * ========================================================================== */
+
+@custom-variant dark ([data-theme='dark'] &);
+
+:root {
+  /* Azul noche — escala principal. Acción, foco y estado disponible. */
+  --hs-azul-900: #101c33;
+  --hs-azul-800: #17294a;
+  --hs-azul-700: #1f3a68;
+  --hs-azul-600: #2a4f8c;
+  --hs-azul-500: #3a6bb5;
+  --hs-azul-400: #6b9adb;
+  --hs-azul-200: #b6cdee;
+  --hs-azul-50: #eaf1fa;
+
+  /* Arena — acento metálico cálido, información secundaria y reserva. */
+  --hs-arena-700: #7a5f2c;
+  --hs-arena-600: #96773a;
+  --hs-arena-500: #bb9a55;
+  --hs-arena-400: #d4b87d;
+  --hs-arena-200: #eadcbc;
+  --hs-arena-50: #f8f2e5;
+
+  /* Estados complementarios, templados para convivir con el azul y la arena. */
+  --hs-coral: #a8443c;
+  --hs-coral-claro: #e9a49c;
+  --hs-salvia: #4c7a63;
+  --hs-salvia-clara: #a6cbb8;
+
+  /* Superficies — lino cálido */
+  --hs-bg: #f5f2ec;
+  --hs-surface: #ffffff;
+  --hs-surface-2: #faf7f2;
+  --hs-text: #1b2230;
+  --hs-muted: #5f6878;
+  --hs-border: #e0dad0;
+  --hs-selection: var(--hs-azul-50);
+
+  /* Roles derivados */
+  --hs-primary: var(--hs-azul-600);
+  --hs-primary-strong: var(--hs-azul-700);
+  --hs-arena-texto: var(--hs-arena-700);
+
+  /*
+   * Fondo de botón primario. Se separa de --hs-primary porque ese token también
+   * pinta barras y gráficos, donde puede aclararse en tema oscuro; aquí no,
+   * porque debe sostener texto blanco a 4.5:1 en ambos temas.
+   */
+  --hs-accion: var(--hs-azul-600);
+  --hs-accion-hover: var(--hs-azul-700);
+
+  /*
+   * La barra de módulos es azul noche en AMBOS temas. Es el rasgo que fija la
+   * identidad del sistema y no depende de la preferencia del usuario.
+   */
+  --hs-rail: #101c33;
+  --hs-rail-text: #f7f5f1;
+  --hs-rail-muted: #9aa6bb;
+
+  /*
+   * Geometría: el rasgo más visible de la vertical. Todo es más blando que en
+   * Restaurante (8/14/20) porque el registro es hospitalario, no operativo.
+   */
+  --hs-radio-control: 12px;
+  --hs-radio-card: 20px;
+  --hs-radio-overlay: 28px;
+  --hs-sombra-panel: 0 1px 2px rgb(27 34 48 / 0.05), 0 10px 30px -14px rgb(27 34 48 / 0.18);
+  --hs-sombra-flotante: 0 16px 44px -14px rgb(16 28 51 / 0.34);
+  --hs-foco: 0 0 0 3px color-mix(in srgb, var(--hs-azul-500) 34%, transparent);
+
+  /* Estructura del shell */
+  --hs-rail-ancho: 92px;
+  --hs-menu-ancho: 300px;
+}
+
+[data-theme='dark'] {
+  --hs-bg: #0c1018;
+  --hs-surface: #141a25;
+  --hs-surface-2: #1a2130;
+  --hs-text: #f2f0ec;
+  --hs-muted: #a4adbd;
+  --hs-border: #2a3243;
+  --hs-selection: #1a2841;
+
+  --hs-primary: var(--hs-azul-400);
+  --hs-primary-strong: #93b6e8;
+  --hs-arena-texto: #d4b87d;
+
+  /* El fondo de acción se mantiene oscuro: en 500 el texto blanco no llega a 4.5:1. */
+  --hs-accion: #2f5a9e;
+  --hs-accion-hover: var(--hs-azul-500);
+
+  --hs-rail: #080c14;
+  --hs-rail-text: #f7f5f1;
+  --hs-rail-muted: #8f9bb0;
+
+  --hs-sombra-panel: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.6);
+  --hs-sombra-flotante: 0 16px 44px -14px rgb(0 0 0 / 0.75);
+}
+
+@theme inline {
+  --color-azul: var(--hs-primary);
+  --color-azul-fuerte: var(--hs-primary-strong);
+  --color-accion: var(--hs-accion);
+  --color-accion-hover: var(--hs-accion-hover);
+  --color-azul-900: var(--hs-azul-900);
+  --color-azul-800: var(--hs-azul-800);
+  --color-azul-600: var(--hs-azul-600);
+  --color-azul-400: var(--hs-azul-400);
+  --color-azul-200: var(--hs-azul-200);
+  --color-azul-50: var(--hs-azul-50);
+
+  --color-arena: var(--hs-arena-500);
+  --color-arena-texto: var(--hs-arena-texto);
+  --color-arena-200: var(--hs-arena-200);
+
+  --color-lienzo: var(--hs-bg);
+  --color-panel: var(--hs-surface);
+  --color-panel-2: var(--hs-surface-2);
+  --color-tinta: var(--hs-text);
+  --color-tenue: var(--hs-muted);
+  --color-linea: var(--hs-border);
+  --color-seleccion: var(--hs-selection);
+
+  --color-rail: var(--hs-rail);
+  --color-rail-tinta: var(--hs-rail-text);
+  --color-rail-tenue: var(--hs-rail-muted);
+
+  --color-coral: var(--hs-coral);
+  --color-salvia: var(--hs-salvia);
+
+  --radius-control: var(--hs-radio-control);
+  --radius-card: var(--hs-radio-card);
+  --radius-overlay: var(--hs-radio-overlay);
+
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Playfair Display', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  background-color: var(--hs-bg);
+  color: var(--hs-text);
+  font-family:
+    'Manrope',
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--hs-arena-500) 38%, transparent);
+  color: var(--hs-text);
+}
+
+/* Foco azul: visible sobre lino, arena y azul noche. */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--hs-foco);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--hs-border) transparent;
+}
+
+/* ── Tipografía ───────────────────────────────────────────────────────────── */
+
+/*
+ * La serif se reserva para títulos y cifras: da el registro de recepción de
+ * hotel sin comprometer la legibilidad de formularios y tablas, que siguen en
+ * sans.
+ */
+.hs-display {
+  font-family: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  font-optical-sizing: auto;
+}
+
+.hs-titulo-pagina {
+  font-family: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.14;
+  letter-spacing: -0.012em;
+}
+
+@media (max-width: 640px) {
+  .hs-titulo-pagina {
+    font-size: 23px;
+  }
+}
+
+.hs-titulo-seccion {
+  font-family: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* Cifra grande de indicador: serif, tabular, muy poco tracking. */
+.hs-cifra {
+  font-family: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.018em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Etiqueta de campo o columna: versalita ancha, el detalle «de recepción». */
+.hs-etiqueta {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* ── Superficies ──────────────────────────────────────────────────────────── */
+
+.hs-panel {
+  background-color: var(--hs-surface);
+  border: 1px solid var(--hs-border);
+  border-radius: var(--hs-radio-card);
+  box-shadow: var(--hs-sombra-panel);
+}
+
+/*
+ * Fondo del área de trabajo: lino con un velo azul muy tenue arriba y una
+ * insinuación de arena abajo. Da profundidad sin restar contraste, porque el
+ * contenido va siempre sobre paneles opacos.
+ */
+.hs-lienzo {
+  background-color: var(--hs-bg);
+  background-image:
+    radial-gradient(
+      48rem 22rem at 12% -8%,
+      color-mix(in srgb, var(--hs-azul-500) 12%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      38rem 20rem at 108% 108%,
+      color-mix(in srgb, var(--hs-arena-400) 22%, transparent),
+      transparent 72%
+    );
+}
+
+[data-theme='dark'] .hs-lienzo {
+  background-image:
+    radial-gradient(
+      48rem 22rem at 12% -8%,
+      color-mix(in srgb, var(--hs-azul-500) 20%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      38rem 20rem at 108% 108%,
+      color-mix(in srgb, var(--hs-arena-400) 10%, transparent),
+      transparent 72%
+    );
+}
+
+/* Filete azul-arena: separador fino que aparece bajo la marca y en portada. */
+.hs-filete {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--hs-azul-500) 74%, transparent) 20%,
+    color-mix(in srgb, var(--hs-arena-400) 80%, transparent) 80%,
+    transparent
+  );
+}
+
+/* ── Tonos de estado ──────────────────────────────────────────────────────── */
+
+/*
+ * Se calculan con color-mix sobre la superficie activa, de modo que el mismo
+ * token sirve en lino y en azul noche sin duplicar valores.
+ */
+.hs-tono {
+  --hs-tono-color: var(--hs-muted);
+  background-color: color-mix(in srgb, var(--hs-tono-color) 13%, var(--hs-surface));
+  border-color: color-mix(in srgb, var(--hs-tono-color) 42%, var(--hs-surface));
+  color: color-mix(in srgb, var(--hs-tono-color) 82%, var(--hs-text));
+}
+
+.hs-tono-azul {
+  --hs-tono-color: var(--hs-azul-600);
+}
+
+/*
+ * La arena es el tono más claro de la paleta: sobre lino hay que bajarla a 700
+ * para que el texto de la insignia llegue a 4.5:1.
+ */
+.hs-tono-arena {
+  --hs-tono-color: var(--hs-arena-700);
+}
+
+.hs-tono-coral {
+  --hs-tono-color: var(--hs-coral);
+}
+
+.hs-tono-salvia {
+  --hs-tono-color: var(--hs-salvia);
+}
+
+.hs-tono-neutro {
+  --hs-tono-color: var(--hs-muted);
+}
+
+/* Sobre azul noche los tintes profundos se apagan: se suben a las variantes claras. */
+[data-theme='dark'] .hs-tono-azul {
+  --hs-tono-color: var(--hs-azul-400);
+}
+
+[data-theme='dark'] .hs-tono-arena {
+  --hs-tono-color: var(--hs-arena-400);
+}
+
+[data-theme='dark'] .hs-tono-coral {
+  --hs-tono-color: var(--hs-coral-claro);
+}
+
+[data-theme='dark'] .hs-tono-salvia {
+  --hs-tono-color: var(--hs-salvia-clara);
+}
+
+/* ── Movimiento ───────────────────────────────────────────────────────────── */
+
+@keyframes hs-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hs-entrada {
+  animation: hs-entrada 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Latido del tablero: marca la habitación que acaba de cambiar de estado. */
+@keyframes hs-latido {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--hs-tono-color) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.hs-latido {
+  animation: hs-latido 1.6s ease-out 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-entrada,
+  .hs-latido {
+    animation: none;
+  }
+}
+
+/* ── Selector de fechas (@vuepic/vue-datepicker) ──────────────────────────── */
+
+/*
+ * La librería trae su propio azul; aquí se le reasignan los tokens Alba. Como
+ * los `--hs-*` ya cambian con `data-theme`, basta un bloque para ambos temas.
+ * En hotelería el calendario es una pieza central (estancias, disponibilidad),
+ * así que se le da el mismo redondeo generoso que al resto del sistema.
+ */
+:root {
+  --dp-font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --dp-font-size: 0.875rem;
+  --dp-preview-font-size: 0.75rem;
+  --dp-border-radius: var(--hs-radio-control);
+  --dp-cell-border-radius: 10px;
+  --dp-cell-size: 36px;
+  --dp-button-height: 34px;
+  --dp-month-year-row-height: 40px;
+  --dp-menu-min-width: 280px;
+  --dp-menu-padding: 8px 10px;
+  --dp-input-padding: 8px 32px 8px 12px;
+  --dp-input-icon-padding: 36px;
+  --dp-action-row-padding: 10px 12px;
+}
+
+.dp--theme-light,
+.dp--theme-dark {
+  --dp-background-color: var(--hs-surface);
+  --dp-text-color: var(--hs-text);
+  --dp-hover-color: var(--hs-selection);
+  --dp-hover-text-color: var(--hs-text);
+  --dp-hover-icon-color: var(--hs-text);
+  --dp-primary-color: var(--hs-accion);
+  --dp-primary-disabled-color: color-mix(in srgb, var(--hs-accion) 45%, var(--hs-surface));
+  --dp-primary-text-color: #fff;
+  --dp-secondary-color: color-mix(in srgb, var(--hs-muted) 55%, var(--hs-surface));
+  --dp-border-color: var(--hs-border);
+  --dp-menu-border-color: var(--hs-border);
+  --dp-border-color-hover: var(--hs-primary);
+  --dp-border-color-focus: var(--hs-primary);
+  --dp-disabled-color: var(--hs-surface-2);
+  --dp-disabled-color-text: var(--hs-muted);
+  --dp-icon-color: var(--hs-muted);
+  --dp-danger-color: var(--hs-coral);
+  --dp-marker-color: var(--hs-arena-500);
+  --dp-highlight-color: color-mix(in srgb, var(--hs-arena-500) 20%, transparent);
+  --dp-scroll-bar-background: transparent;
+  --dp-scroll-bar-color: var(--hs-border);
+  --dp-range-between-dates-background-color: color-mix(
+    in srgb,
+    var(--hs-primary) 14%,
+    var(--hs-surface)
+  );
+  --dp-range-between-dates-text-color: var(--hs-text);
+  --dp-range-between-border-color: transparent;
+}
+
+.dp--input {
+  min-height: 2.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp--input:focus-visible {
+  box-shadow: none;
+}
+
+.dp--menu {
+  border-radius: var(--hs-radio-card);
+  box-shadow: var(--hs-sombra-flotante);
+  overflow: hidden;
+}
+
+/* Hoy: anillo de arena, para no confundirlo con el día seleccionado (azul). */
+.dp--today {
+  border-color: var(--hs-arena-500);
+}
+
+.dp--calendar-header-item {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--hs-muted);
+}
+
+/* Mes y año en la cabecera: serif «de recepción», y se ven clicables. */
+.dp--month-year-select {
+  font-family: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.dp--overlay-cell {
+  text-transform: capitalize;
+}
+
+.dp--action-row {
+  border-top: 1px solid var(--hs-border);
+}
+
+/* Campo sin anillo de foco global: el propio control ya marca el foco. */
+.hs-sin-anillo:focus-visible {
+  box-shadow: none;
+}
+
+/*
+ * Foco de los campos de formulario: borde azul con un halo suave del mismo
+ * color. Sustituye al anillo global, que sobre un borde azul se veía como un
+ * doble contorno.
+ */
+.hs-campo:focus-visible,
+.hs-campo:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hs-primary) 22%, transparent);
+}
+
+.hs-campo[aria-invalid='true']:focus-visible,
+.hs-campo:has([aria-invalid='true']):focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hs-coral) 22%, transparent);
+}
+
+.dp--input:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hs-primary) 22%, transparent);
+}
