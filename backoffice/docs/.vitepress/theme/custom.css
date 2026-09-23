@@ -4,7 +4,7 @@
  */
 
 :root {
-  --vp-font-family-base: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --vp-font-family-base: 'Inter', ui-sans-serif, system-ui, sans-serif;
   --vp-font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
 
   --vp-c-bg: #eef1f5;
@@ -78,7 +78,7 @@
 .VPHero .name,
 .vp-doc h1,
 .vp-doc h2 {
-  font-family: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  font-family: 'Fraunces', 'Iowan Old Style', Georgia, serif;
   letter-spacing: -0.012em;
 }
 
