@@ -58,8 +58,8 @@ withDefaults(defineProps<{ detalle?: boolean }>(), { detalle: false })
 
 <style scoped>
 .hs-origen-erp {
-  border: 1px solid color-mix(in srgb, var(--color-arena, #a8842b) 45%, var(--color-linea));
-  background: color-mix(in srgb, var(--color-arena, #a8842b) 10%, transparent);
-  color: var(--color-arena-texto, var(--color-tinta));
+  border: 1px solid color-mix(in srgb, var(--color-turquesa, #a8842b) 45%, var(--color-linea));
+  background: color-mix(in srgb, var(--color-turquesa, #a8842b) 10%, transparent);
+  color: var(--color-turquesa-texto, var(--color-tinta));
 }
 </style>

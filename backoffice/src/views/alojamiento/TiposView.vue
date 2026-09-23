@@ -92,7 +92,7 @@ function validar(t: NuevoTipoHabitacion): Record<string, string> {
       </span>
     </template>
     <template #col-regimenIncluido="{ fila }">
-      <KmBadge tono="arena">{{ etiquetaRegimen[fila.regimenIncluido] }}</KmBadge>
+      <KmBadge tono="turquesa">{{ etiquetaRegimen[fila.regimenIncluido] }}</KmBadge>
     </template>
 
     <template #formulario="{ borrador, errores }">

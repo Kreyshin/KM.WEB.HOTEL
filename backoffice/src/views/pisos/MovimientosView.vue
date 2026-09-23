@@ -28,7 +28,7 @@ const columnas: ColumnaTabla[] = [
 const tonos: Record<Movimiento['tipo'], TonoHotel> = {
   ingreso: 'salvia',
   salida: 'azul',
-  ajuste: 'arena',
+  ajuste: 'turquesa',
   merma: 'coral',
 }
 

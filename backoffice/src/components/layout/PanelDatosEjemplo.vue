@@ -81,7 +81,7 @@ function reiniciar() {
             min="0"
             max="3000"
             step="50"
-            class="accent-[var(--hs-arena-500)]"
+            class="accent-[var(--hs-turquesa-500)]"
             @change="aplicar"
           />
         </label>
@@ -97,7 +97,7 @@ function reiniciar() {
             min="0"
             max="100"
             step="5"
-            class="accent-[var(--hs-arena-500)]"
+            class="accent-[var(--hs-turquesa-500)]"
             @change="aplicar"
           />
         </label>

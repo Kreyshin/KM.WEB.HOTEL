@@ -1,9 +1,10 @@
 /**
  * Identidad del sistema de hotelería.
  *
- * Este vertical tiene lenguaje visual propio —azul noche, arena y lino—
- * definido en `src/assets/main.css`. La pertenencia a la plataforma se
- * mantiene como atribución explícita («Un sistema Karma Systems», la división
+ * Este vertical tiene lenguaje visual propio —turquesa, azul y plata sobre
+ * negro azulado—, tomado del isotipo y definido en `src/assets/main.css`. La
+ * pertenencia a la plataforma se mantiene como atribución explícita («Un
+ * sistema Karma Systems», la división
  * de software de Karma Novum) con el isotipo corporativo, que se conserva en
  * `src/components/marca/KarmaLogo.vue`.
  *

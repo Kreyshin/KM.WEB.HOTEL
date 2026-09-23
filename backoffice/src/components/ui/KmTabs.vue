@@ -48,7 +48,7 @@ defineExpose({ idPanel: (valor: string) => `${base}-panel-${valor}` })
         class="relative -mb-px flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors"
         :class="
           p.valor === activa
-            ? 'border-arena text-tinta'
+            ? 'border-turquesa text-tinta'
             : 'border-transparent text-tenue hover:text-tinta'
         "
         @click="activa = p.valor"

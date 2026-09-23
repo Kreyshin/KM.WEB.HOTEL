@@ -132,7 +132,7 @@ async function hacerCheckOut(reserva: ReservaResuelta) {
                 {{ r.codigo }} · {{ r.tipo?.nombre }} · {{ r.noches }} noches ·
                 {{ etiquetaCanal[r.canal] }} · {{ etiquetaRegimen[r.regimen] }}
               </p>
-              <p v-if="r.notas" class="mt-1 text-xs text-arena-texto">{{ r.notas }}</p>
+              <p v-if="r.notas" class="mt-1 text-xs text-turquesa-texto">{{ r.notas }}</p>
             </div>
             <KmBadge :tono="tonoReserva[r.estado]">{{ etiquetaReserva[r.estado] }}</KmBadge>
             <KmButton tamano="sm" @click="abrirCheckIn(r)">Check-in</KmButton>
@@ -203,7 +203,7 @@ async function hacerCheckOut(reserva: ReservaResuelta) {
             {{ reservaEnCurso.tipo?.nombre }} · {{ reservaEnCurso.noches }} noches ·
             {{ formatearSoles(reservaEnCurso.tarifaNoche) }} por noche
           </p>
-          <p v-if="reservaEnCurso.huesped?.preferencias" class="mt-2 text-xs text-arena-texto">
+          <p v-if="reservaEnCurso.huesped?.preferencias" class="mt-2 text-xs text-turquesa-texto">
             {{ reservaEnCurso.huesped.preferencias }}
           </p>
         </div>

@@ -58,39 +58,40 @@ const cuentasDemo = [
 <template>
   <div class="grid h-full lg:grid-cols-[1.05fr_1fr]">
     <!--
-      Portada: azul noche con el amanecer al fondo. Sobria, sin fotografía, con
-      el peso puesto en la tipografía y en el isotipo de la vertical.
+      Portada: negro azulado con el degradado del isotipo al fondo, turquesa
+      arriba y azul abajo. Sobria, sin fotografía, con el peso puesto en la
+      tipografía y en la marca de la vertical.
     -->
     <div class="relative hidden flex-col justify-between overflow-hidden p-14 lg:flex">
-      <div class="absolute inset-0 bg-[#101c33]" />
+      <div class="absolute inset-0 bg-[#0b1220]" />
       <div
         class="absolute top-[-20rem] left-1/2 size-[46rem] -translate-x-1/2 rounded-full opacity-25 blur-3xl"
-        style="background: radial-gradient(circle, #d4b87d 0%, transparent 65%)"
+        style="background: radial-gradient(circle, #22c9f2 0%, transparent 65%)"
       />
       <div
         class="absolute right-[-14rem] bottom-[-18rem] size-[40rem] rounded-full opacity-45 blur-3xl"
-        style="background: radial-gradient(circle, #3a6bb5 0%, transparent 70%)"
+        style="background: radial-gradient(circle, #0a53cf 0%, transparent 70%)"
       />
 
-      <!-- Filigrana del amanecer, a gran escala y muy tenue. -->
+      <!-- Filigrana del isotipo, a gran escala y muy tenue. -->
       <MarcaAlba
         :tamano="520"
-        class="pointer-events-none absolute right-[-8rem] bottom-[-8rem] opacity-[0.07]"
+        class="pointer-events-none absolute right-[-9rem] bottom-[-7rem] opacity-[0.08]"
         aria-hidden="true"
       />
 
       <div class="relative flex items-center gap-3.5">
         <MarcaAlba :tamano="46" />
         <div>
-          <p class="hs-display text-xl leading-none font-semibold text-[#f7f5f1]">
+          <p class="hs-display text-xl leading-none font-semibold text-[#f4f7fa]">
             {{ marca.nombre }}
           </p>
-          <p class="hs-etiqueta mt-1.5 text-[#d4b87d]">{{ marca.descriptor }}</p>
+          <p class="hs-etiqueta mt-1.5 text-[#22c9f2]">{{ marca.descriptor }}</p>
         </div>
       </div>
 
       <div class="relative">
-        <h1 class="hs-display max-w-lg text-[3.3rem] leading-[1.06] font-semibold text-[#f7f5f1]">
+        <h1 class="hs-display max-w-lg text-[3.3rem] leading-[1.06] font-semibold text-[#f4f7fa]">
           {{ marca.lema }}
         </h1>
 
@@ -100,9 +101,9 @@ const cuentasDemo = [
           <li
             v-for="c in marca.capacidades"
             :key="c"
-            class="flex items-start gap-3 text-sm text-[#c3cbd8]"
+            class="flex items-start gap-3 text-sm text-[#c0cbd9]"
           >
-            <span class="mt-[7px] size-1 shrink-0 rounded-full bg-[#d4b87d]" aria-hidden="true" />
+            <span class="mt-[7px] size-1 shrink-0 rounded-full bg-[#22c9f2]" aria-hidden="true" />
             {{ c }}
           </li>
         </ul>
@@ -111,7 +112,7 @@ const cuentasDemo = [
       <!-- La pertenencia a la plataforma se mantiene explícita. -->
       <div class="relative flex items-center gap-2.5">
         <KarmaLogo :tamano="20" />
-        <p class="text-xs text-[#8f9bb0]">{{ marca.plataforma }}</p>
+        <p class="text-xs text-[#8593a6]">{{ marca.plataforma }}</p>
       </div>
     </div>
 
@@ -124,7 +125,7 @@ const cuentasDemo = [
             <p class="hs-display text-lg leading-none font-semibold text-tinta">
               {{ marca.nombre }}
             </p>
-            <p class="hs-etiqueta mt-1.5 text-arena-texto">{{ marca.descriptor }}</p>
+            <p class="hs-etiqueta mt-1.5 text-turquesa-texto">{{ marca.descriptor }}</p>
           </div>
         </div>
 

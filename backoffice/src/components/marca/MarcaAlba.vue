@@ -1,10 +1,14 @@
 <script setup lang="ts">
 /**
- * Amanecer sobre el mar: isotipo de la vertical Hotelería.
+ * Isotipo de la vertical Hotelería.
  *
- * El sol naciente (arena) sobre las tres olas (azul noche) da el nombre del
- * producto, Alba, y su promesa: el turno que empieza con todo en orden. Los
- * colores son fijos: la marca no cambia con el tema de la interfaz.
+ * Un techo en chevron —ala izquierda plata, ala derecha en degradado turquesa →
+ * azul— cobijando una cama. Es el resumen del producto: el alojamiento (techo)
+ * y la unidad que se vende (cama-noche).
+ *
+ * Los colores son fijos: la marca no cambia con el tema de la interfaz. Los
+ * `id` de los degradados llevan el prefijo `hs-marca-` para no chocar con los
+ * del isotipo de plataforma cuando ambos conviven en la misma página.
  */
 withDefaults(defineProps<{ tamano?: number }>(), { tamano: 44 })
 </script>
@@ -19,90 +23,74 @@ withDefaults(defineProps<{ tamano?: number }>(), { tamano: 44 })
     aria-label="Alba · Hotelería"
   >
     <defs>
+      <!-- Ala izquierda del techo: plata, del claro al grafito. -->
       <linearGradient
-        id="hs-sol"
-        x1="164"
-        y1="108"
-        x2="348"
-        y2="300"
+        id="hs-marca-plata"
+        x1="70"
+        y1="110"
+        x2="250"
+        y2="345"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#f8f2e5" />
-        <stop offset="0.3" stop-color="#eadcbc" />
-        <stop offset="0.68" stop-color="#d4b87d" />
-        <stop offset="1" stop-color="#96773a" />
+        <stop stop-color="#ccd3dc" />
+        <stop offset="0.55" stop-color="#9aa6b6" />
+        <stop offset="1" stop-color="#5c6a7d" />
       </linearGradient>
+
+      <!-- Ala derecha: el degradado maestro, turquesa a azul profundo. -->
       <linearGradient
-        id="hs-ola-alta"
-        x1="72"
-        y1="300"
-        x2="440"
-        y2="372"
-        gradientUnits="userSpaceOnUse"
-      >
-        <stop stop-color="#6b9adb" />
-        <stop offset="0.5" stop-color="#3a6bb5" />
-        <stop offset="1" stop-color="#1f3a68" />
-      </linearGradient>
-      <linearGradient
-        id="hs-ola-media"
-        x1="60"
-        y1="356"
+        id="hs-marca-degradado"
+        x1="268"
+        y1="96"
         x2="452"
-        y2="424"
+        y2="342"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#3a6bb5" />
-        <stop offset="0.6" stop-color="#1f3a68" />
-        <stop offset="1" stop-color="#101c33" />
+        <stop stop-color="#22c9f2" />
+        <stop offset="0.45" stop-color="#0a9fe0" />
+        <stop offset="1" stop-color="#0e3a96" />
       </linearGradient>
+
+      <!-- Cabecera de la cama: el mismo degradado, en vertical. -->
       <linearGradient
-        id="hs-ola-baja"
-        x1="48"
-        y1="412"
-        x2="464"
-        y2="470"
+        id="hs-marca-cabecera"
+        x1="256"
+        y1="252"
+        x2="256"
+        y2="324"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stop-color="#17294a" />
-        <stop offset="1" stop-color="#080c14" />
+        <stop stop-color="#22c9f2" />
+        <stop offset="1" stop-color="#1268ec" />
       </linearGradient>
-      <filter
-        id="hs-sombra-alba"
-        x="20"
-        y="60"
-        width="472"
-        height="420"
-        filterUnits="userSpaceOnUse"
-        color-interpolation-filters="sRGB"
+
+      <!-- Base de la cama: plata que cae al negro azulado por la derecha. -->
+      <linearGradient
+        id="hs-marca-base"
+        x1="120"
+        y1="360"
+        x2="400"
+        y2="392"
+        gradientUnits="userSpaceOnUse"
       >
-        <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#060a12" flood-opacity="0.5" />
-      </filter>
+        <stop stop-color="#c3cbd6" />
+        <stop offset="0.52" stop-color="#aab4c2" />
+        <stop offset="0.62" stop-color="#3b4a60" />
+        <stop offset="1" stop-color="#101827" />
+      </linearGradient>
     </defs>
 
-    <g :filter="'url(#hs-sombra-alba)'">
-      <!-- Sol naciente: el disco asoma por detrás de la primera ola. -->
-      <circle cx="256" cy="232" r="96" fill="url(#hs-sol)" />
-      <!-- Rayos: tres trazos cortos, el gesto del amanecer. -->
-      <path
-        d="M256 88v36M146 128l24 26M366 128l-24 26"
-        stroke="#d4b87d"
-        stroke-width="16"
-        stroke-linecap="round"
-      />
+    <!-- Techo: dos alas que arrancan del vértice superior. -->
+    <path d="M247 88 63 262v107a10 10 0 0 0 17 7l167-158z" fill="url(#hs-marca-plata)" />
+    <path d="M265 88l184 174v107a10 10 0 0 1-17 7L265 218z" fill="url(#hs-marca-degradado)" />
 
-      <path
-        d="M60 316c48-26 86-26 132 0s98 26 146 0 82-26 122 2v40c-44-24-82-24-126 2s-100 26-146 0-84-26-128-2z"
-        fill="url(#hs-ola-alta)"
-      />
-      <path
-        d="M48 378c50-28 90-28 138 0s102 28 152 0 84-28 126 2v40c-46-26-86-26-132 2s-104 28-152 0-88-28-132-2z"
-        fill="url(#hs-ola-media)"
-      />
-      <path
-        d="M40 438c52-28 94-28 144 0s106 28 158 0 86-28 130 2v22H40z"
-        fill="url(#hs-ola-baja)"
-      />
-    </g>
+    <!-- Cama: cabecera, base y dos patas. -->
+    <path
+      d="M172 324v-38a34 34 0 0 1 34-34h100a34 34 0 0 1 34 34v38z"
+      fill="url(#hs-marca-cabecera)"
+    />
+    <rect x="118" y="322" width="276" height="86" rx="26" fill="url(#hs-marca-base)" />
+    <rect x="134" y="398" width="34" height="46" rx="12" fill="#101827" />
+    <rect x="344" y="398" width="34" height="46" rx="12" fill="#101827" />
   </svg>
 </template>

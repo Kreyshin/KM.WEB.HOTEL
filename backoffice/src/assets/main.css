@@ -7,15 +7,17 @@
 /* =============================================================================
  * Hotelería — sistema de diseño propio
  *
- * Identidad: azul noche, arena dorada y lino. Donde Restaurante usa el fuego
- * del servicio, Hospedaje usa la calma de la habitación: superficies cálidas
- * de lino, cromo azul profundo y un metal arena para el detalle.
+ * Identidad tomada del isotipo de la vertical: el techo y la cama en degradado
+ * TURQUESA → AZUL sobre azul noche, con grises plata y negro. Donde Restaurante
+ * usa el fuego del servicio, Hospedaje usa la frialdad limpia de la habitación
+ * preparada: blanco, plata y un filo turquesa.
  *
  * Tres rasgos separan esta vertical de sus hermanas sin romper la estructura
  * compartida (barra de módulos + menú de secciones + área de trabajo):
  *   1. Geometría más blanda: radios grandes (12/20/28 px) en todos los niveles.
  *   2. Tipografía de portada: Playfair en títulos y cifras, Manrope en la UI.
- *   3. Paleta fría y cálida a la vez: azul noche sobre lino, nunca gris puro.
+ *   3. Paleta enteramente fría: el degradado del logo es el único color cálido
+ *      que se permite, y va siempre de turquesa a azul, nunca al revés.
  *
  * La identidad de plataforma Karma se conserva íntegra en
  * `src/assets/karma/karma-identidad.css` y en `src/components/marca/KarmaLogo.vue`,
@@ -27,43 +29,53 @@
 @custom-variant dark ([data-theme='dark'] &);
 
 :root {
-  /* Azul noche — escala principal. Acción, foco y estado disponible. */
-  --hs-azul-900: #101c33;
-  --hs-azul-800: #17294a;
-  --hs-azul-700: #1f3a68;
-  --hs-azul-600: #2a4f8c;
-  --hs-azul-500: #3a6bb5;
-  --hs-azul-400: #6b9adb;
-  --hs-azul-200: #b6cdee;
-  --hs-azul-50: #eaf1fa;
+  /*
+   * Azul — escala principal, del azul noche del logo al celeste de su remate.
+   * Sostiene acción, foco y estado disponible.
+   */
+  --hs-azul-900: #0b1220;
+  --hs-azul-800: #10203c;
+  --hs-azul-700: #0e3a96;
+  --hs-azul-600: #0a53cf;
+  --hs-azul-500: #1268ec;
+  --hs-azul-400: #4e9bf7;
+  --hs-azul-200: #afd2fc;
+  --hs-azul-50: #e8f2fe;
 
-  /* Arena — acento metálico cálido, información secundaria y reserva. */
-  --hs-arena-700: #7a5f2c;
-  --hs-arena-600: #96773a;
-  --hs-arena-500: #bb9a55;
-  --hs-arena-400: #d4b87d;
-  --hs-arena-200: #eadcbc;
-  --hs-arena-50: #f8f2e5;
+  /*
+   * Turquesa — el extremo claro del degradado del isotipo. Es el acento de la
+   * vertical: información secundaria, reserva y marcas de estado.
+   *
+   * El 500 y el 400 son luminosos: NO sostienen texto blanco ni sirven de color
+   * de texto sobre blanco. Para texto se usa `--hs-turquesa-texto`, que baja al
+   * 700 en claro y sube al 400 en oscuro.
+   */
+  --hs-turquesa-700: #046b86;
+  --hs-turquesa-600: #0089ab;
+  --hs-turquesa-500: #00aed6;
+  --hs-turquesa-400: #22c9f2;
+  --hs-turquesa-200: #a5e8f9;
+  --hs-turquesa-50: #e2f7fd;
 
-  /* Estados complementarios, templados para convivir con el azul y la arena. */
-  --hs-coral: #a8443c;
-  --hs-coral-claro: #e9a49c;
-  --hs-salvia: #4c7a63;
-  --hs-salvia-clara: #a6cbb8;
+  /* Estados complementarios, enfriados para convivir con el azul y el turquesa. */
+  --hs-coral: #c0392f;
+  --hs-coral-claro: #f2a49b;
+  --hs-salvia: #12796b;
+  --hs-salvia-clara: #79d3c4;
 
-  /* Superficies — lino cálido */
-  --hs-bg: #f5f2ec;
+  /* Superficies — blanco y plata, la habitación recién preparada. */
+  --hs-bg: #eef1f5;
   --hs-surface: #ffffff;
-  --hs-surface-2: #faf7f2;
-  --hs-text: #1b2230;
-  --hs-muted: #5f6878;
-  --hs-border: #e0dad0;
+  --hs-surface-2: #f6f8fb;
+  --hs-text: #0f1724;
+  --hs-muted: #5b6673;
+  --hs-border: #dbe1e9;
   --hs-selection: var(--hs-azul-50);
 
   /* Roles derivados */
   --hs-primary: var(--hs-azul-600);
   --hs-primary-strong: var(--hs-azul-700);
-  --hs-arena-texto: var(--hs-arena-700);
+  --hs-turquesa-texto: var(--hs-turquesa-700);
 
   /*
    * Fondo de botón primario. Se separa de --hs-primary porque ese token también
@@ -74,12 +86,12 @@
   --hs-accion-hover: var(--hs-azul-700);
 
   /*
-   * La barra de módulos es azul noche en AMBOS temas. Es el rasgo que fija la
-   * identidad del sistema y no depende de la preferencia del usuario.
+   * La barra de módulos es el negro azulado del logo en AMBOS temas. Es el
+   * rasgo que fija la identidad y no depende de la preferencia del usuario.
    */
-  --hs-rail: #101c33;
-  --hs-rail-text: #f7f5f1;
-  --hs-rail-muted: #9aa6bb;
+  --hs-rail: #0b1220;
+  --hs-rail-text: #f4f7fa;
+  --hs-rail-muted: #8d99aa;
 
   /*
    * Geometría: el rasgo más visible de la vertical. Todo es más blando que en
@@ -88,9 +100,9 @@
   --hs-radio-control: 12px;
   --hs-radio-card: 20px;
   --hs-radio-overlay: 28px;
-  --hs-sombra-panel: 0 1px 2px rgb(27 34 48 / 0.05), 0 10px 30px -14px rgb(27 34 48 / 0.18);
-  --hs-sombra-flotante: 0 16px 44px -14px rgb(16 28 51 / 0.34);
-  --hs-foco: 0 0 0 3px color-mix(in srgb, var(--hs-azul-500) 34%, transparent);
+  --hs-sombra-panel: 0 1px 2px rgb(15 23 36 / 0.05), 0 10px 30px -14px rgb(15 23 36 / 0.18);
+  --hs-sombra-flotante: 0 16px 44px -14px rgb(11 18 32 / 0.34);
+  --hs-foco: 0 0 0 3px color-mix(in srgb, var(--hs-turquesa-500) 42%, transparent);
 
   /* Estructura del shell */
   --hs-rail-ancho: 92px;
@@ -98,25 +110,26 @@
 }
 
 [data-theme='dark'] {
-  --hs-bg: #0c1018;
-  --hs-surface: #141a25;
-  --hs-surface-2: #1a2130;
-  --hs-text: #f2f0ec;
-  --hs-muted: #a4adbd;
-  --hs-border: #2a3243;
-  --hs-selection: #1a2841;
+  /* Noche: el azul del logo llevado a superficie, nunca gris neutro. */
+  --hs-bg: #080d16;
+  --hs-surface: #111827;
+  --hs-surface-2: #172032;
+  --hs-text: #eef2f7;
+  --hs-muted: #9aa6b6;
+  --hs-border: #263144;
+  --hs-selection: #10263f;
 
   --hs-primary: var(--hs-azul-400);
-  --hs-primary-strong: #93b6e8;
-  --hs-arena-texto: #d4b87d;
+  --hs-primary-strong: #8cc0fa;
+  --hs-turquesa-texto: var(--hs-turquesa-400);
 
-  /* El fondo de acción se mantiene oscuro: en 500 el texto blanco no llega a 4.5:1. */
-  --hs-accion: #2f5a9e;
+  /* El fondo de acción se mantiene en 600: en 500 el texto blanco no llega a 4.5:1. */
+  --hs-accion: #0a53cf;
   --hs-accion-hover: var(--hs-azul-500);
 
-  --hs-rail: #080c14;
-  --hs-rail-text: #f7f5f1;
-  --hs-rail-muted: #8f9bb0;
+  --hs-rail: #05080f;
+  --hs-rail-text: #f4f7fa;
+  --hs-rail-muted: #8593a6;
 
   --hs-sombra-panel: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.6);
   --hs-sombra-flotante: 0 16px 44px -14px rgb(0 0 0 / 0.75);
@@ -134,9 +147,9 @@
   --color-azul-200: var(--hs-azul-200);
   --color-azul-50: var(--hs-azul-50);
 
-  --color-arena: var(--hs-arena-500);
-  --color-arena-texto: var(--hs-arena-texto);
-  --color-arena-200: var(--hs-arena-200);
+  --color-turquesa: var(--hs-turquesa-500);
+  --color-turquesa-texto: var(--hs-turquesa-texto);
+  --color-turquesa-200: var(--hs-turquesa-200);
 
   --color-lienzo: var(--hs-bg);
   --color-panel: var(--hs-surface);
@@ -181,11 +194,11 @@ body {
 }
 
 ::selection {
-  background-color: color-mix(in srgb, var(--hs-arena-500) 38%, transparent);
+  background-color: color-mix(in srgb, var(--hs-turquesa-400) 40%, transparent);
   color: var(--hs-text);
 }
 
-/* Foco azul: visible sobre lino, arena y azul noche. */
+/* Foco turquesa: visible sobre blanco, plata y azul noche. */
 :focus-visible {
   outline: none;
   box-shadow: var(--hs-foco);
@@ -257,21 +270,21 @@ body {
 }
 
 /*
- * Fondo del área de trabajo: lino con un velo azul muy tenue arriba y una
- * insinuación de arena abajo. Da profundidad sin restar contraste, porque el
- * contenido va siempre sobre paneles opacos.
+ * Fondo del área de trabajo: plata con un velo turquesa arriba y azul abajo,
+ * el degradado del isotipo abierto sobre toda la pantalla. Da profundidad sin
+ * restar contraste, porque el contenido va siempre sobre paneles opacos.
  */
 .hs-lienzo {
   background-color: var(--hs-bg);
   background-image:
     radial-gradient(
       48rem 22rem at 12% -8%,
-      color-mix(in srgb, var(--hs-azul-500) 12%, transparent),
+      color-mix(in srgb, var(--hs-turquesa-400) 16%, transparent),
       transparent 72%
     ),
     radial-gradient(
       38rem 20rem at 108% 108%,
-      color-mix(in srgb, var(--hs-arena-400) 22%, transparent),
+      color-mix(in srgb, var(--hs-azul-500) 16%, transparent),
       transparent 72%
     );
 }
@@ -280,24 +293,27 @@ body {
   background-image:
     radial-gradient(
       48rem 22rem at 12% -8%,
-      color-mix(in srgb, var(--hs-azul-500) 20%, transparent),
+      color-mix(in srgb, var(--hs-turquesa-500) 14%, transparent),
       transparent 72%
     ),
     radial-gradient(
       38rem 20rem at 108% 108%,
-      color-mix(in srgb, var(--hs-arena-400) 10%, transparent),
+      color-mix(in srgb, var(--hs-azul-500) 22%, transparent),
       transparent 72%
     );
 }
 
-/* Filete azul-arena: separador fino que aparece bajo la marca y en portada. */
+/*
+ * Filete turquesa→azul: el degradado del isotipo reducido a una línea. Aparece
+ * bajo la marca, en la portada y como separador de secciones.
+ */
 .hs-filete {
   height: 1px;
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in srgb, var(--hs-azul-500) 74%, transparent) 20%,
-    color-mix(in srgb, var(--hs-arena-400) 80%, transparent) 80%,
+    color-mix(in srgb, var(--hs-turquesa-400) 85%, transparent) 20%,
+    color-mix(in srgb, var(--hs-azul-600) 80%, transparent) 80%,
     transparent
   );
 }
@@ -306,7 +322,7 @@ body {
 
 /*
  * Se calculan con color-mix sobre la superficie activa, de modo que el mismo
- * token sirve en lino y en azul noche sin duplicar valores.
+ * token sirve en blanco y en azul noche sin duplicar valores.
  */
 .hs-tono {
   --hs-tono-color: var(--hs-muted);
@@ -320,11 +336,11 @@ body {
 }
 
 /*
- * La arena es el tono más claro de la paleta: sobre lino hay que bajarla a 700
- * para que el texto de la insignia llegue a 4.5:1.
+ * El turquesa es el tono más luminoso de la paleta: sobre blanco hay que
+ * bajarlo a 700 para que el texto de la insignia llegue a 4.5:1.
  */
-.hs-tono-arena {
-  --hs-tono-color: var(--hs-arena-700);
+.hs-tono-turquesa {
+  --hs-tono-color: var(--hs-turquesa-700);
 }
 
 .hs-tono-coral {
@@ -344,8 +360,8 @@ body {
   --hs-tono-color: var(--hs-azul-400);
 }
 
-[data-theme='dark'] .hs-tono-arena {
-  --hs-tono-color: var(--hs-arena-400);
+[data-theme='dark'] .hs-tono-turquesa {
+  --hs-tono-color: var(--hs-turquesa-400);
 }
 
 [data-theme='dark'] .hs-tono-coral {
@@ -438,8 +454,8 @@ body {
   --dp-disabled-color-text: var(--hs-muted);
   --dp-icon-color: var(--hs-muted);
   --dp-danger-color: var(--hs-coral);
-  --dp-marker-color: var(--hs-arena-500);
-  --dp-highlight-color: color-mix(in srgb, var(--hs-arena-500) 20%, transparent);
+  --dp-marker-color: var(--hs-turquesa-500);
+  --dp-highlight-color: color-mix(in srgb, var(--hs-turquesa-500) 20%, transparent);
   --dp-scroll-bar-background: transparent;
   --dp-scroll-bar-color: var(--hs-border);
   --dp-range-between-dates-background-color: color-mix(
@@ -466,9 +482,9 @@ body {
   overflow: hidden;
 }
 
-/* Hoy: anillo de arena, para no confundirlo con el día seleccionado (azul). */
+/* Hoy: anillo turquesa, para no confundirlo con el día seleccionado (azul). */
 .dp--today {
-  border-color: var(--hs-arena-500);
+  border-color: var(--hs-turquesa-500);
 }
 
 .dp--calendar-header-item {

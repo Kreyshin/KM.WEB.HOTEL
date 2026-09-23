@@ -35,7 +35,7 @@ const verbo = computed(() => (props.activar ? 'Activar' : 'Desactivar'))
 
       <ul
         class="flex flex-col gap-2 rounded-card border px-4 py-3 text-sm"
-        :class="activar ? 'hs-tono hs-tono-azul' : 'hs-tono hs-tono-arena'"
+        :class="activar ? 'hs-tono hs-tono-azul' : 'hs-tono hs-tono-turquesa'"
       >
         <li v-for="c in consecuencias" :key="c" class="flex gap-2">
           <span aria-hidden="true">•</span>

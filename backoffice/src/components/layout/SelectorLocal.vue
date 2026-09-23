@@ -72,7 +72,7 @@ function elegir(id: string) {
         >
           <span
             class="mt-1.5 size-2 shrink-0 rounded-full"
-            :class="l.id === localStore.localId ? 'bg-arena' : 'bg-linea'"
+            :class="l.id === localStore.localId ? 'bg-turquesa' : 'bg-linea'"
             aria-hidden="true"
           />
           <span class="min-w-0">
