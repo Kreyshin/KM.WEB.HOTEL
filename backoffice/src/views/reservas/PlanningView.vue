@@ -324,7 +324,7 @@ async function moverDesdePanel() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="hs-operacion flex flex-col gap-4">
     <!-- El eje de tiempo es la navegación, no un filtro. -->
     <header class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-2">
@@ -447,7 +447,7 @@ async function moverDesdePanel() {
               :key="n.iso"
               :data-columna="i"
               :data-habitacion="h.id"
-              class="hs-rack-celda h-10 cursor-cell"
+              class="hs-rack-celda h-[var(--km-celda,2.5rem)] cursor-cell"
               :class="[
                 n.finde ? 'hs-rack-finde' : '',
                 n.esHoy ? 'hs-rack-hoy' : '',
