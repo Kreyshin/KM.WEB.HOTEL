@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmButton from '@/components/ui/KmButton.vue'
 import KmCard from '@/components/ui/KmCard.vue'
@@ -28,7 +29,7 @@ const ui = useUiStore()
 
 const incidencias = ref<Incidencia[]>([])
 const habitaciones = ref<HabitacionResuelta[]>([])
-const cargando = ref(true)
+const { cargando, iniciar, terminar } = useCarga()
 const modalAbierto = ref(false)
 const guardando = ref(false)
 
@@ -51,7 +52,7 @@ const opcionesHabitacion = computed<OpcionSelect[]>(() => [
 ])
 
 async function cargar() {
-  cargando.value = true
+  iniciar()
   try {
     const localId = localStore.localId
     ;[incidencias.value, habitaciones.value] = await Promise.all([
@@ -61,7 +62,7 @@ async function cargar() {
   } catch {
     ui.error('No se pudieron cargar las incidencias.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 

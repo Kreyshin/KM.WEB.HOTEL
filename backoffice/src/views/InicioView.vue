@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import { habitacionesService } from '@/services/habitaciones.service'
 import { incidenciasService } from '@/services/incidencias.service'
@@ -36,14 +37,14 @@ const salidas = ref<ReservaResuelta[]>([])
 const tareas = ref<TareaResuelta[]>([])
 const incidencias = ref<Incidencia[]>([])
 const resumen = ref<Awaited<ReturnType<typeof habitacionesService.resumen>> | null>(null)
-const cargando = ref(true)
+const { cargando, iniciar, terminar } = useCarga()
 
 const hoy = new Date().toISOString().slice(0, 10)
 
 async function cargar() {
   const localId = localStore.localId
   if (!localId) return
-  cargando.value = true
+  iniciar()
   try {
     ;[llegadas.value, salidas.value, tareas.value, incidencias.value, resumen.value] =
       await Promise.all([
@@ -56,7 +57,7 @@ async function cargar() {
   } catch {
     ui.error('No se pudo cargar el resumen del día.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 

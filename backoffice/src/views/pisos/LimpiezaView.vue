@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmCard from '@/components/ui/KmCard.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
@@ -34,12 +35,12 @@ const ui = useUiStore()
 const tareas = ref<TareaResuelta[]>([])
 const camareras = ref<Usuario[]>([])
 const carga = ref<{ usuario: Usuario; tareas: number; minutos: number }[]>([])
-const cargando = ref(true)
+const { cargando, refrescando, iniciar, terminar } = useCarga()
 
 async function cargar() {
   const localId = localStore.localId
   if (!localId) return
-  cargando.value = true
+  iniciar()
   try {
     ;[tareas.value, camareras.value, carga.value] = await Promise.all([
       limpiezaService.tablero(localId),
@@ -49,7 +50,7 @@ async function cargar() {
   } catch {
     ui.error('No se pudo cargar el tablero de pisos.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 
@@ -127,7 +128,12 @@ async function asignar(t: TareaResuelta, usuarioId: string | number | undefined)
 
     <p v-if="cargando" class="text-sm text-tenue">Cargando tareas…</p>
 
-    <div v-else class="grid gap-4 lg:grid-cols-4">
+    <div
+      v-else
+      class="grid gap-4 lg:grid-cols-4"
+      :class="{ 'hs-refrescando': refrescando }"
+      :aria-busy="refrescando"
+    >
       <section
         v-for="col in columnas"
         :key="col.estado"

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmCard from '@/components/ui/KmCard.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
 import { tarifasService } from '@/services/tarifas.service'
@@ -20,20 +21,20 @@ const ui = useUiStore()
 
 const canal = ref<string | number | undefined>('directo')
 const rejilla = ref<Awaited<ReturnType<typeof tarifasService.rejilla>> | null>(null)
-const cargando = ref(true)
+const { cargando, iniciar, terminar } = useCarga()
 
 const canales: OpcionSelect[] = (
   ['directo', 'web', 'telefono', 'booking', 'expedia', 'corporativo'] as CanalReserva[]
 ).map((c) => ({ valor: c, etiqueta: etiquetaCanal[c] }))
 
 async function cargar() {
-  cargando.value = true
+  iniciar()
   try {
     rejilla.value = await tarifasService.rejilla(14, canal.value as CanalReserva)
   } catch {
     ui.error('No se pudo calcular la rejilla de tarifas.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 

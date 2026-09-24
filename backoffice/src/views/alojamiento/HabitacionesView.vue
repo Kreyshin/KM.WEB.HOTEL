@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmBusqueda from '@/components/ui/KmBusqueda.vue'
 import KmCard from '@/components/ui/KmCard.vue'
@@ -32,7 +33,7 @@ const ui = useUiStore()
 
 const habitaciones = ref<HabitacionResuelta[]>([])
 const camareras = ref<Usuario[]>([])
-const cargando = ref(true)
+const { cargando, iniciar, terminar } = useCarga()
 const error = ref<string | null>(null)
 const buscar = ref('')
 const filtroOcupacion = ref<string | number | undefined>('')
@@ -66,7 +67,7 @@ const opcionesCamarera = computed<OpcionSelect[]>(() => [
 async function cargar() {
   const localId = localStore.localId
   if (!localId) return
-  cargando.value = true
+  iniciar()
   error.value = null
   try {
     ;[habitaciones.value, camareras.value] = await Promise.all([
@@ -76,7 +77,7 @@ async function cargar() {
   } catch (e) {
     error.value = (e as { mensaje?: string }).mensaje ?? 'No se pudieron cargar las habitaciones.'
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 
