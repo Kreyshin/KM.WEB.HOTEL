@@ -38,3 +38,17 @@ No se puede eliminar si existen habitaciones de ese tipo o reservas futuras. Des
 ## Pisos
 
 Las plantas de la sede. Ordenan el plano y reparten el trabajo de housekeeping. Admiten niveles negativos para sótanos.
+
+## La vista de tipos
+
+Un tipo de habitación es **lo que el hotel vende**, y una fila de tabla no deja
+imaginarlo: la diferencia entre una _doble_ y una _twin_ no está en el nombre,
+está en si hay una cama o dos.
+
+Por eso la pantalla se abre en **tarjetas**, cada una con un plano en miniatura
+deducido de su configuración de camas, el aforo, el régimen incluido, los
+amenities y la tarifa. Se ve de un vistazo lo que se está vendiendo.
+
+La tabla sigue a un clic, en el interruptor de la derecha, para quien viene a
+buscar un tipo concreto en lugar de a mirarlos. El sistema recuerda la
+elección.
