@@ -39,7 +39,7 @@ onBeforeUnmount(() => {
           :aria-label="titulo"
           class="hs-drawer-panel relative flex h-full w-full flex-col border-l border-linea bg-panel"
           :class="anchos[ancho]"
-          style="box-shadow: var(--hs-sombra-flotante)"
+          style="box-shadow: var(--ts-sombra-flotante)"
         >
           <header class="flex items-start justify-between gap-4 border-b border-linea px-6 py-4">
             <div class="min-w-0">
@@ -83,11 +83,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .hs-drawer-enter-active,
 .hs-drawer-leave-active {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--km-mov-normal) var(--km-curva);
 }
 .hs-drawer-enter-active .hs-drawer-panel,
 .hs-drawer-leave-active .hs-drawer-panel {
-  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform var(--km-mov-lento) var(--km-curva);
 }
 .hs-drawer-enter-from,
 .hs-drawer-leave-to {
