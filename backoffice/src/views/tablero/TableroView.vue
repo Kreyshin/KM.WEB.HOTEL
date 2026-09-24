@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmSwitch from '@/components/ui/KmSwitch.vue'
 import KmTabs from '@/components/ui/KmTabs.vue'
@@ -43,7 +44,7 @@ const localStore = useLocalStore()
 const ui = useUiStore()
 
 const pisos = ref<PisoConHabitaciones[]>([])
-const cargando = ref(true)
+const { cargando, refrescando, iniciar, terminar } = useCarga()
 const enVivo = ref(true)
 const filtro = ref('todas')
 const ultimoRefresco = ref<Date | null>(null)
@@ -55,7 +56,7 @@ let temporizador: ReturnType<typeof setInterval> | undefined
 async function cargar(silencioso = false) {
   const localId = localStore.localId
   if (!localId) return
-  if (!silencioso) cargando.value = true
+  if (!silencioso) iniciar()
   try {
     const anterior = new Map(
       pisos.value.flatMap((p) => p.habitaciones.map((h) => [h.id, h.actualizada] as const)),
@@ -75,7 +76,7 @@ async function cargar(silencioso = false) {
   } catch {
     if (!silencioso) ui.error('No se pudo cargar el tablero.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 
@@ -228,7 +229,13 @@ async function cerrarEstancia(h: HabitacionResuelta) {
       Ninguna habitación cumple este filtro ahora mismo.
     </p>
 
-    <section v-for="piso in pisosFiltrados" :key="piso.id" class="flex flex-col gap-3">
+    <section
+      v-for="piso in pisosFiltrados"
+      :key="piso.id"
+      class="flex flex-col gap-3"
+      :class="{ 'hs-refrescando': refrescando }"
+      :aria-busy="refrescando"
+    >
       <div class="flex items-baseline gap-3">
         <h2 class="hs-titulo-seccion text-tinta">{{ piso.nombre }}</h2>
         <span class="hs-etiqueta text-tenue">{{ piso.habitaciones.length }} habitaciones</span>

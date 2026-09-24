@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmButton from '@/components/ui/KmButton.vue'
 import KmCard from '@/components/ui/KmCard.vue'
@@ -28,7 +29,7 @@ const ui = useUiStore()
 const llegadas = ref<ReservaResuelta[]>([])
 const salidas = ref<ReservaResuelta[]>([])
 const enCasa = ref<ReservaResuelta[]>([])
-const cargando = ref(true)
+const { cargando, iniciar, terminar } = useCarga()
 
 const reservaEnCurso = ref<ReservaResuelta | null>(null)
 const modalCheckIn = ref(false)
@@ -41,7 +42,7 @@ const hoy = new Date().toISOString().slice(0, 10)
 async function cargar() {
   const localId = localStore.localId
   if (!localId) return
-  cargando.value = true
+  iniciar()
   try {
     ;[llegadas.value, salidas.value, enCasa.value] = await Promise.all([
       reservasService.llegadas(localId, hoy),
@@ -51,7 +52,7 @@ async function cargar() {
   } catch {
     ui.error('No se pudo cargar la recepción del día.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 

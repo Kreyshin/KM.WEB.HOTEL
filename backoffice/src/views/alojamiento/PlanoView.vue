@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmTabs from '@/components/ui/KmTabs.vue'
 import { habitacionesService } from '@/services/habitaciones.service'
@@ -28,12 +29,12 @@ const ui = useUiStore()
 const pisos = ref<PisoConHabitaciones[]>([])
 const pisoActivo = ref('')
 const seleccionada = ref<HabitacionResuelta | null>(null)
-const cargando = ref(true)
+const { cargando, iniciar, terminar } = useCarga()
 
 async function cargar() {
   const localId = localStore.localId
   if (!localId) return
-  cargando.value = true
+  iniciar()
   try {
     pisos.value = await habitacionesService.planoPorPiso(localId)
     if (!pisos.value.some((p) => p.id === pisoActivo.value)) {
@@ -42,7 +43,7 @@ async function cargar() {
   } catch {
     ui.error('No se pudo cargar el plano.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCarga } from '@/composables/useCarga'
 import BarraReserva from '@/components/planning/BarraReserva.vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmBotonIcono from '@/components/ui/KmBotonIcono.vue'
@@ -42,7 +43,7 @@ const ui = useUiStore()
 
 const habitaciones = ref<HabitacionResuelta[]>([])
 const reservas = ref<ReservaResuelta[]>([])
-const cargando = ref(true)
+const { cargando, refrescando, iniciar, terminar } = useCarga()
 
 const hoy = new Date().toISOString().slice(0, 10)
 const inicio = ref(hoy)
@@ -173,7 +174,7 @@ const opcionesHabitacion = computed<OpcionSelect[]>(() =>
 async function cargar() {
   const localId = localStore.localId
   if (!localId) return
-  cargando.value = true
+  iniciar()
   try {
     const datos = await reservasService.planning(localId, inicio.value, fin.value)
     habitaciones.value = datos.habitaciones
@@ -181,7 +182,7 @@ async function cargar() {
   } catch {
     ui.error('No se pudo cargar el planning.')
   } finally {
-    cargando.value = false
+    terminar()
   }
 }
 
@@ -353,7 +354,12 @@ async function moverDesdePanel() {
 
     <p v-if="cargando" class="py-16 text-center text-sm text-tenue">Cargando el planning…</p>
 
-    <div v-else class="overflow-x-auto rounded-card border border-linea bg-panel">
+    <div
+      v-else
+      class="overflow-x-auto rounded-card border border-linea bg-panel"
+      :class="{ 'hs-refrescando': refrescando }"
+      :aria-busy="refrescando"
+    >
       <div class="min-w-[54rem]">
         <!-- Cabecera de fechas -->
         <div
