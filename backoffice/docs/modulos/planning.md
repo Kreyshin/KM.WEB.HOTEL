@@ -4,8 +4,8 @@ Habitaciones en filas, noches en columnas. Es la pantalla con la que piensa una
 recepción, y la que distingue un PMS de una lista de reservas.
 
 ::: tip El tablero y el rack no compiten
-El **[tablero](/modulos/tablero)** responde *«¿cómo está el hotel ahora?»*. El
-**rack** responde *«¿cómo está el hotel la semana que viene?»*. De la segunda
+El **[tablero](/modulos/tablero)** responde _«¿cómo está el hotel ahora?»_. El
+**rack** responde _«¿cómo está el hotel la semana que viene?»_. De la segunda
 pregunta salen el overbooking, los cambios de habitación y las ventas de última
 hora, y no se puede contestar mirando el día de hoy.
 :::
@@ -13,15 +13,15 @@ hora, y no se puede contestar mirando el día de hoy.
 ## Cómo se lee
 
 El eje de tiempo **es la navegación**, no un filtro: se avanza y se retrocede
-por semanas, y *Hoy* vuelve al presente.
+por semanas, y _Hoy_ vuelve al presente.
 
-| Elemento | Qué dice |
-| --- | --- |
-| Columna fija | Número de habitación y tipo, agrupadas por planta |
-| Columnas tintadas | Sábado y domingo: la ocupación de un hotel se lee por semanas |
-| Línea turquesa vertical | Hoy, cruzando el rack entero |
-| Filas rayadas | Fuera de servicio: no se venden, y se ve que no se venden |
-| Pie | Ocupación por noche, sobre las habitaciones vendibles |
+| Elemento                | Qué dice                                                      |
+| ----------------------- | ------------------------------------------------------------- |
+| Columna fija            | Número de habitación y tipo, agrupadas por planta             |
+| Columnas tintadas       | Sábado y domingo: la ocupación de un hotel se lee por semanas |
+| Línea turquesa vertical | Hoy, cruzando el rack entero                                  |
+| Filas rayadas           | Fuera de servicio: no se venden, y se ve que no se venden     |
+| Pie                     | Ocupación por noche, sobre las habitaciones vendibles         |
 
 ## Las barras
 
@@ -30,11 +30,11 @@ casilla**, porque una entrada es por la tarde y una salida por la mañana. Ese
 medio hueco es lo que permite ver que una habitación se libera y se vuelve a
 vender el mismo día.
 
-| Barra | Estado |
-| --- | --- |
-| Turquesa, borde punteado | <span class="estado estado-reservada">◷ Pendiente</span> — contratada, sin confirmar |
-| Azul llena | <span class="estado estado-libre">◆ Confirmada</span> — el huésped todavía no ha llegado |
-| Verde llena | <span class="estado estado-limpia">● En casa</span> — hay alguien durmiendo ahí |
+| Barra                    | Estado                                                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------- |
+| Turquesa, borde punteado | <span class="estado estado-reservada">◷ Pendiente</span> — contratada, sin confirmar     |
+| Azul llena               | <span class="estado estado-libre">◆ Confirmada</span> — el huésped todavía no ha llegado |
+| Verde llena              | <span class="estado estado-limpia">● En casa</span> — hay alguien durmiendo ahí          |
 
 Si la estancia empieza antes del tramo visible o termina después, la barra se
 **corta en recto** por ese lado: el borde dice «esto sigue» sin tener que leer
