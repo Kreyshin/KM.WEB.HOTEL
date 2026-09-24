@@ -658,3 +658,26 @@ body {
     transform: none;
   }
 }
+
+/* ── Postura ─────────────────────────────────────────────────────────────────
+ *
+ * Quién usa esto y desde dónde. En Hospedaje el cuerpo es el de **una recepción
+ * sentada, con ratón y teclado, mirando muchas filas a la vez**: el rack de dos
+ * semanas o el parte de llegadas del día no se leen de lejos, se barren de
+ * cerca.
+ *
+ * Por eso aquí el modo operación va en la dirección contraria a la de
+ * Restaurante: **aprieta**. Controles de 36 px y texto de 13 px caben más veces
+ * en la misma pantalla, y en un mostrador ver una noche más vale más que un
+ * botón más gordo. Sigue muy por encima del mínimo de objetivo táctil, porque
+ * el dedo no es aquí el instrumento.
+ *
+ * Fuera de este modo no cambia nada.
+ */
+.hs-operacion {
+  --km-toque: 2.25rem;
+  --km-texto: 0.8125rem;
+  --km-fila: 0.625rem;
+  /* Altura de fila del rack: apretar aquí son dos habitaciones más a la vista. */
+  --km-celda: 2.25rem;
+}
