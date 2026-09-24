@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import PlanoTipo from '@/components/tipos/PlanoTipo.vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
+import KmBotonIcono from '@/components/ui/KmBotonIcono.vue'
 import KmCatalogo from '@/components/ui/KmCatalogo.vue'
 import KmField from '@/components/ui/KmField.vue'
 import KmInput from '@/components/ui/KmInput.vue'
@@ -65,6 +67,7 @@ function validar(t: NuevoTipoHabitacion): Record<string, string> {
     :validar="validar"
     :nombre-de="(t: TipoHabitacion) => t.nombre"
     ancho-drawer="lg"
+    vista-por-defecto="tarjetas"
     :exportacion="[
       { etiqueta: 'Código', valor: (t: TipoHabitacion) => t.codigo },
       { etiqueta: 'Tipo', valor: (t: TipoHabitacion) => t.nombre },
@@ -93,6 +96,87 @@ function validar(t: NuevoTipoHabitacion): Record<string, string> {
     </template>
     <template #col-regimenIncluido="{ fila }">
       <KmBadge tono="turquesa">{{ etiquetaRegimen[fila.regimenIncluido] }}</KmBadge>
+    </template>
+
+    <!--
+      La tarjeta del tipo: lo que de verdad se vende. El plano, el aforo y la
+      tarifa se leen de un vistazo, que es como se elige un tipo cuando suena
+      el teléfono; la tabla sigue a un clic para quien viene a buscar uno.
+    -->
+    <template #tarjeta="{ fila, editar, eliminar }">
+      <article
+        class="group flex flex-col overflow-hidden rounded-card border border-linea bg-panel transition-colors hover:border-turquesa"
+        :class="fila.activo ? '' : 'opacity-60'"
+      >
+        <PlanoTipo :camas="fila.camas" :superficie="fila.superficie" />
+
+        <div class="flex flex-1 flex-col p-4">
+          <header class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="hs-display truncate text-lg leading-tight font-semibold text-tinta">
+                {{ fila.nombre }}
+              </p>
+              <p class="font-mono text-[11px] text-tenue">{{ fila.codigo }}</p>
+            </div>
+            <p
+              class="hs-display shrink-0 text-right text-lg leading-none font-semibold text-tinta tabular-nums"
+            >
+              {{ formatearSoles(fila.tarifaBase) }}
+              <span class="block text-[10px] font-medium text-tenue">por noche</span>
+            </p>
+          </header>
+
+          <p class="mt-2 text-sm text-tenue">{{ fila.camas }}</p>
+
+          <div class="mt-3 flex flex-wrap gap-1.5">
+            <KmBadge tono="neutro">
+              {{ fila.capacidad }} pax
+              <template v-if="fila.capacidadMaxima > fila.capacidad">
+                · +{{ fila.capacidadMaxima - fila.capacidad }} supletoria
+              </template>
+            </KmBadge>
+            <KmBadge tono="turquesa">{{ etiquetaRegimen[fila.regimenIncluido] }}</KmBadge>
+            <KmBadge v-if="!fila.activo" tono="neutro">✕ No se publica</KmBadge>
+          </div>
+
+          <!-- Los amenities son argumento de venta: se ven sin abrir la ficha. -->
+          <ul v-if="fila.servicios.length" class="mt-3 flex flex-wrap gap-x-3 gap-y-1">
+            <li
+              v-for="s in fila.servicios.slice(0, 4)"
+              :key="s"
+              class="text-[11px] text-tenue before:mr-1 before:content-['·']"
+            >
+              {{ s }}
+            </li>
+            <li
+              v-if="fila.servicios.length > 4"
+              class="text-[11px] font-semibold text-turquesa-texto"
+            >
+              +{{ fila.servicios.length - 4 }}
+            </li>
+          </ul>
+
+          <!-- Las acciones aparecen al acercarse, para no ensuciar la rejilla. -->
+          <footer
+            class="mt-auto flex justify-end gap-1 pt-4 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100"
+          >
+            <KmBotonIcono
+              icono="editar"
+              etiqueta="Editar"
+              :contexto="fila.nombre"
+              @click="editar"
+            />
+            <KmBotonIcono
+              v-if="eliminar"
+              icono="eliminar"
+              etiqueta="Eliminar"
+              :contexto="fila.nombre"
+              tono="peligro"
+              @click="eliminar"
+            />
+          </footer>
+        </div>
+      </article>
     </template>
 
     <template #formulario="{ borrador, errores }">
