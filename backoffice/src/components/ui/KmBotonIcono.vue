@@ -12,6 +12,8 @@ export type IconoAccion =
   | 'enviar'
   | 'anular'
   | 'separar'
+  | 'anterior'
+  | 'siguiente'
 
 const props = withDefaults(
   defineProps<{
@@ -47,6 +49,8 @@ const trazos: Record<IconoAccion, string[]> = {
   recibir: ['M3 7l9-4 9 4v10l-9 4-9-4V7z', 'M8 12l3 3 5-6'],
   enviar: ['M4 12 20 4l-6 16-3-7-7-1z'],
   anular: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M5.6 5.6l12.8 12.8'],
+  anterior: ['M15 6l-6 6 6 6'],
+  siguiente: ['M9 6l6 6-6 6'],
   separar: [
     'M9 15l6-6',
     'M11 6l1.5-1.5a4 4 0 0 1 5.7 5.7L17 11.5',

@@ -69,6 +69,12 @@ const rutas: RouteRecordRaw[] = [
 
       // ── Reservas ────────────────────────────────────────────────────────
       {
+        path: 'reservas/planning',
+        name: 'planning',
+        component: () => import('@/views/reservas/PlanningView.vue'),
+        meta: { titulo: 'Planning' },
+      },
+      {
         path: 'reservas',
         name: 'reservas',
         component: () => import('@/views/reservas/ReservasView.vue'),

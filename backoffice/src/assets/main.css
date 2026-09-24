@@ -538,3 +538,123 @@ body {
 .dp--input:focus {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--hs-primary) 22%, transparent);
 }
+
+/* ── El rack ─────────────────────────────────────────────────────────────────
+ *
+ * Habitaciones en filas, noches en columnas: la pantalla con la que piensa una
+ * recepción. Vive aquí y no en el componente porque la barra de reserva es un
+ * objeto de la vertical, igual que la mesa lo es de Restaurante: su forma, su
+ * altura y su manera de cortarse cuando la estancia se sale del tramo son
+ * parte de la identidad de Hospedaje, no de una vista concreta.
+ */
+
+.hs-rack-celda {
+  border-right: 1px solid var(--hs-border);
+  border-bottom: 1px solid var(--hs-border);
+}
+
+/* El fin de semana se tiñe: la ocupación de un hotel se lee por semanas. */
+.hs-rack-finde {
+  background-color: color-mix(in srgb, var(--hs-azul-500) 5%, transparent);
+}
+
+/* Hoy manda sobre todo lo demás: una línea vertical que cruza el rack entero. */
+.hs-rack-hoy {
+  box-shadow: inset 2px 0 0 0 var(--hs-turquesa-500);
+}
+
+/* Fuera de servicio: rayado diagonal. No se vende, y se ve que no se vende. */
+.hs-rack-fuera {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--hs-muted) 18%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+.hs-barra {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: grab;
+  touch-action: none;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    filter 140ms ease;
+}
+
+.hs-barra:hover {
+  filter: brightness(1.04);
+  box-shadow: 0 2px 10px -2px rgb(0 0 0 / 0.35);
+}
+
+.hs-barra:focus-visible {
+  outline: none;
+  box-shadow: var(--hs-foco);
+}
+
+.hs-barra-arrastrando {
+  cursor: grabbing;
+  z-index: 30;
+  transform: scale(1.02);
+  box-shadow: 0 10px 24px -6px rgb(0 0 0 / 0.5);
+}
+
+/*
+ * Una estancia que empieza antes del tramo, o termina después, se corta en
+ * recto por ese lado: el borde dice «esto sigue», sin necesidad de leer fechas.
+ */
+.hs-barra-corta-izq {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.hs-barra-corta-der {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.hs-barra-pendiente {
+  background-color: color-mix(in srgb, var(--hs-turquesa-500) 22%, var(--hs-surface));
+  border-color: color-mix(in srgb, var(--hs-turquesa-500) 55%, var(--hs-surface));
+  border-style: dashed;
+  color: color-mix(in srgb, var(--hs-turquesa-500) 88%, var(--hs-text));
+}
+
+.hs-barra-confirmada {
+  background-color: var(--hs-azul-600);
+  border-color: var(--hs-azul-700);
+  color: #ffffff;
+}
+
+.hs-barra-encasa {
+  background-color: var(--hs-salvia);
+  border-color: var(--hs-salvia);
+  color: #ffffff;
+}
+
+.hs-barra-salida {
+  background-color: color-mix(in srgb, var(--hs-muted) 34%, var(--hs-surface));
+  border-color: color-mix(in srgb, var(--hs-muted) 46%, var(--hs-surface));
+  color: var(--hs-text);
+}
+
+/* La fila sobre la que se va a soltar una reserva arrastrada. */
+.hs-rack-destino {
+  background-color: color-mix(in srgb, var(--hs-turquesa-500) 12%, transparent);
+  box-shadow: inset 0 0 0 2px var(--hs-turquesa-500);
+}
+
+.hs-rack-destino-vetado {
+  background-color: color-mix(in srgb, var(--hs-coral) 12%, transparent);
+  box-shadow: inset 0 0 0 2px var(--hs-coral);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-barra {
+    transition: none;
+  }
+  .hs-barra-arrastrando {
+    transform: none;
+  }
+}

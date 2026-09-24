@@ -1,4 +1,12 @@
-import type { Consulta, Estancia, NuevaReserva, Paginado, Reserva, ReservaResuelta } from '@/types'
+import type {
+  Consulta,
+  Estancia,
+  HabitacionResuelta,
+  NuevaReserva,
+  Paginado,
+  Reserva,
+  ReservaResuelta,
+} from '@/types'
 import { noches } from '@/utils/formato'
 import { db, latencia, nuevoId, persistir } from './mock/db'
 import { errorCampo } from './mock/reglas'
@@ -118,6 +126,115 @@ export const reservasService = {
     const actual = db.reservas.find((r) => r.id === id)
     validar({ ...actual, ...datos })
     return repo.actualizar(id, datos)
+  },
+
+  /**
+   * El rack del hotel: habitaciones en filas, noches en columnas.
+   *
+   * Es la pantalla con la que piensa una recepción —y la que distingue un PMS
+   * de una tabla de reservas—, así que el servicio devuelve de una sola vez
+   * las dos mitades que hacen falta para dibujarla: el inventario ordenado
+   * como se recorre el hotel (por planta y número) y todo lo contratado que
+   * toca el tramo de fechas.
+   *
+   * `hasta` es exclusivo, igual que una salida: una reserva que sale el día
+   * `desde` no pinta ninguna noche dentro del tramo.
+   */
+  async planning(
+    localId: string,
+    desde: string,
+    hasta: string,
+  ): Promise<{ habitaciones: HabitacionResuelta[]; reservas: ReservaResuelta[] }> {
+    const pisos = db.pisos
+      .filter((p) => p.localId === localId)
+      .sort((a, b) => a.orden - b.orden || a.nivel - b.nivel)
+
+    const habitaciones = pisos.flatMap((piso) =>
+      db.habitaciones
+        .filter((h) => h.pisoId === piso.id)
+        .sort((a, b) => a.numero.localeCompare(b.numero, 'es', { numeric: true }))
+        .map((h) => ({
+          ...h,
+          piso,
+          tipo: db.tiposHabitacion.find((t) => t.id === h.tipoId),
+          estancia: db.estancias.find((e) => e.id === h.estanciaId),
+        })),
+    )
+
+    const reservas = db.reservas
+      .filter(
+        (r) =>
+          r.localId === localId &&
+          !['cancelada', 'noShow'].includes(r.estado) &&
+          r.entrada < hasta &&
+          r.salida > desde,
+      )
+      .sort((a, b) => a.entrada.localeCompare(b.entrada))
+      .map(resolver)
+
+    return latencia({ habitaciones, reservas })
+  },
+
+  /**
+   * Mueve una reserva a otra habitación.
+   *
+   * Es el gesto diario del rack: arrastrar una barra a otra fila. Se comprueba
+   * el solape contra lo ya contratado en esa habitación, porque una doble
+   * venta descubierta en el mostrador cuesta mucho más que un aviso aquí.
+   */
+  async reasignar(reservaId: string, habitacionId: string): Promise<Reserva> {
+    const reserva = db.reservas.find((r) => r.id === reservaId)
+    if (!reserva) throw { mensaje: 'Reserva no encontrada.' }
+    if (reserva.estado === 'salida') {
+      throw { mensaje: 'Una estancia ya cerrada no se cambia de habitación.' }
+    }
+
+    const destino = db.habitaciones.find((h) => h.id === habitacionId)
+    if (!destino) throw { mensaje: 'Habitación no encontrada.' }
+    if (destino.limpieza === 'fueraServicio') {
+      throw { mensaje: `La ${destino.numero} está fuera de servicio.` }
+    }
+
+    const choque = db.reservas.find(
+      (r) =>
+        r.id !== reservaId &&
+        r.habitacionId === habitacionId &&
+        !['cancelada', 'noShow', 'salida'].includes(r.estado) &&
+        r.entrada < reserva.salida &&
+        r.salida > reserva.entrada,
+    )
+    if (choque) {
+      throw { mensaje: `La ${destino.numero} ya tiene la ${choque.codigo} esas noches.` }
+    }
+
+    const origen = db.habitaciones.find((h) => h.id === reserva.habitacionId)
+
+    // Una estancia en curso se lleva consigo la ocupación y la llave.
+    if (reserva.estado === 'enCasa') {
+      const estancia = db.estancias.find((e) => e.reservaId === reservaId && !e.checkOut)
+      if (estancia) estancia.habitacionId = habitacionId
+      if (origen) {
+        origen.ocupacion = 'libre'
+        origen.limpieza = 'sucia'
+        origen.estanciaId = undefined
+        origen.actualizada = new Date().toISOString()
+      }
+      destino.ocupacion = 'ocupada'
+      destino.estanciaId = estancia?.id
+      destino.actualizada = new Date().toISOString()
+    } else {
+      if (origen && origen.ocupacion === 'reservada') {
+        origen.ocupacion = 'libre'
+        origen.actualizada = new Date().toISOString()
+      }
+      if (destino.ocupacion === 'libre' && reserva.estado === 'confirmada') {
+        destino.ocupacion = 'reservada'
+        destino.actualizada = new Date().toISOString()
+      }
+    }
+
+    persistir()
+    return repo.actualizar(reservaId, { habitacionId })
   },
 
   /**

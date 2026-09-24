@@ -78,6 +78,11 @@ export const modulos: ModuloNav[] = [
       'M8 3v4M16 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
     secciones: [
       {
+        nombreRuta: 'planning',
+        etiqueta: 'Planning',
+        descripcion: 'El rack: habitaciones por noche',
+      },
+      {
         nombreRuta: 'reservas',
         etiqueta: 'Reservas',
         descripcion: 'Agenda completa, por estado y canal',

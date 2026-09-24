@@ -62,6 +62,7 @@ export default defineConfig({
             { text: 'Resumen', link: '/modulos/' },
             { text: 'Inicio · El día de hoy', link: '/modulos/inicio' },
             { text: 'Tablero de habitaciones', link: '/modulos/tablero' },
+            { text: 'Planning · el rack', link: '/modulos/planning' },
             { text: 'Alojamiento', link: '/modulos/alojamiento' },
             { text: 'Reservas', link: '/modulos/reservas' },
             { text: 'Recepción', link: '/modulos/recepcion' },
