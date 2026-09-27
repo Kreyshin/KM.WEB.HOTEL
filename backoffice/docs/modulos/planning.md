@@ -47,30 +47,72 @@ tiene llave. Es lo normal en un hotel —se reserva «una doble», no la 203— 
 deja de serlo cuando el huésped está en la puerta: por eso está a la vista y no
 escondido en un filtro.
 
-## Los dos gestos
+## Los tres gestos
 
-### Arrastrar para cambiar de habitación
+El rack no es un calendario que se consulta: es el control con el que se
+trabaja. Todo lo que una recepción hace con una reserva —moverla, alargarla,
+venderla— se hace aquí, con el dedo, sin abrir un formulario.
 
-Se coge la barra y se suelta en otra fila. La fila de destino se ilumina
-mientras se arrastra: **turquesa** si cabe, **roja** si no.
+### Mover: arrastrar el cuerpo de la barra
 
-El sistema comprueba el solape antes de mover. Una doble venta descubierta en el
-mostrador cuesta mucho más que un aviso aquí, así que:
+Se coge la barra y se suelta donde toque. **Arriba y abajo** cambia de
+habitación; **a los lados**, de fecha; una diagonal hace las dos cosas de un
+tirón, que es como se resuelve de verdad una reubicación.
 
-- una habitación **fuera de servicio** no admite reservas;
-- una habitación que ya tiene esas noches vendidas se rechaza, diciendo con qué
-  localizador choca;
-- si la reserva está **en casa**, el cambio se lleva consigo la estancia: la
-  habitación anterior queda libre y **sucia**, y la nueva, ocupada.
+Mientras se arrastra, la fila de destino se ilumina —**turquesa** si cabe,
+**roja** si no— y la barra se pinta rayada cuando el movimiento no es válido.
+El motivo se dice al soltar, con nombre y apellidos: _«La 101 ya la tiene
+Fernández esas noches»_.
 
-### Barrer noches libres para vender
+### Alargar o acortar: tirar de los bordes
 
-Arrastrando sobre las casillas vacías de una habitación se marca un tramo de
-noches y se abre la venta con la habitación y las fechas ya puestas. El huésped
-se pide en la agenda de reservas: una reserva sin huésped es media reserva.
+Los dos extremos de la barra son asas. El **izquierdo** mueve la entrada; el
+**derecho**, la salida. Prolongar una noche es la operación más frecuente de un
+mostrador, y sin asas obligaría a abrir una ficha para cambiar una fecha.
+
+### Vender: barrer las noches libres
+
+Arrastrando sobre las casillas vacías de una habitación se marca un tramo y
+**se cierra la venta ahí mismo**. El rack ya sabe la habitación, las fechas y
+la tarifa —resuelta con su temporada y su canal—; lo único que pregunta es
+quién duerme ahí, y admite darlo de alta sin salir.
+
+::: warning El documento se pide desde el principio
+Aunque el huésped se dé de alta con prisa, el documento es obligatorio: es uno
+de los campos que la norma peruana exige en el **Registro de Huéspedes**.
+Dejarlo para después significa perseguirlo el día del check-out.
+:::
+
+## Las reglas que el rack no deja saltarse
+
+Se comprueban dos veces a propósito: en el navegador mientras el dedo se mueve,
+para poder pintar el veto en el acto, y en el servicio al soltar, que es donde
+mandan. Un rack que solo avisa después de soltar obliga a deshacer, y deshacer
+en un rack es reordenar el hotel.
+
+| Regla                                                           | Por qué                                                       |
+| --------------------------------------------------------------- | ------------------------------------------------------------- |
+| Una habitación **fuera de servicio** no admite reservas         | No se vende lo que no se puede entregar                       |
+| Dos reservas no comparten noche en la misma habitación          | La doble venta se descubre en el mostrador y cuesta mucho más |
+| A quien **ya hizo el check-in** no se le mueve la entrada       | Durmió aquí anoche; solo puede cambiar hasta cuándo se queda  |
+| Una estancia **cerrada, cancelada o no presentada** no se mueve | Ya se facturó y ya está en el Registro de Huéspedes           |
+| Una reserva dura **al menos una noche**                         | La unidad que se vende es la noche                            |
+
+Cuando una reserva no se puede mover, su barra se ve más apagada y pierde las
+asas: se mira, no se toca.
+
+## La ficha al pasar por encima
+
+Al posar el puntero sobre una barra sale una ficha con lo que se pregunta por
+teléfono: noches, entrada, salida, huéspedes, tarifa por noche y canal. Sale a
+los 140 ms —antes de que dé tiempo a dudar— y se coloca debajo de la barra
+cuando la fila está muy arriba para caber encima.
+
+Es información, no un aviso: aparece sin animación de entrada y no roba el
+foco.
 
 ::: info Nada depende de arrastrar
-Los dos gestos tienen su equivalente en el panel lateral de la reserva, que se
+Los tres gestos tienen su equivalente en el panel lateral de la reserva, que se
 abre con un clic. Un rack que solo se maneja arrastrando deja fuera a quien no
 puede arrastrar.
 :::

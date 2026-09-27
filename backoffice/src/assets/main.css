@@ -615,12 +615,17 @@ body {
 .hs-barra {
   border-radius: 999px;
   border: 1px solid transparent;
-  cursor: grab;
   touch-action: none;
+  /*
+   * La anchura y la posición se animan mientras se estira o se mueve: sin
+   * esto, la barra salta de noche en noche y el gesto se siente a tirones.
+   * Al soltar, la recarga la coloca en su sitio definitivo sin que se note.
+   */
   transition:
-    transform 140ms ease,
-    box-shadow 140ms ease,
-    filter 140ms ease;
+    left var(--km-mov-rapido) var(--km-curva),
+    width var(--km-mov-rapido) var(--km-curva),
+    box-shadow var(--km-mov-normal) var(--km-curva),
+    filter var(--km-mov-normal) var(--km-curva);
 }
 
 .hs-barra:hover {
@@ -634,10 +639,33 @@ body {
 }
 
 .hs-barra-arrastrando {
-  cursor: grabbing;
   z-index: 30;
-  transform: scale(1.02);
   box-shadow: 0 10px 24px -6px rgb(0 0 0 / 0.5);
+  /* Mientras el dedo manda, la barra no interpola: va donde va. */
+  transition: none;
+}
+
+/* El movimiento en curso no cabe. Rojo, y además rayado: no solo color. */
+.hs-barra-vetada {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgb(255 255 255 / 0.28) 0 5px,
+    transparent 5px 10px
+  );
+  outline: 2px solid var(--hs-coral);
+  outline-offset: 1px;
+}
+
+/* Cancelada, no presentada o ya cerrada: se mira, no se mueve. */
+.hs-barra-fria {
+  background-color: color-mix(in srgb, var(--hs-muted) 18%, var(--hs-surface));
+  border-color: color-mix(in srgb, var(--hs-muted) 34%, var(--hs-surface));
+  border-style: dashed;
+  color: var(--hs-muted);
+}
+
+.hs-barra-fijada {
+  opacity: 0.75;
 }
 
 /*

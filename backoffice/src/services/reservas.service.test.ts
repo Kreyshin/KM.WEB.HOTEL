@@ -170,3 +170,116 @@ describe('planning y reasignación', () => {
     expect(db.estancias.find((e) => e.id === estancia.id)?.habitacionId).toBe(libre.id)
   })
 })
+
+/**
+ * Mover una reserva por el rack.
+ *
+ * Es el gesto con el que trabaja una recepción, así que las reglas se prueban
+ * contra el servicio y no contra la pantalla: el mismo movimiento hecho desde
+ * la ficha tiene que encontrar los mismos límites.
+ */
+describe('reprogramar', () => {
+  const sumar = (iso: string, dias: number) => {
+    const f = new Date(`${iso}T12:00:00`)
+    f.setDate(f.getDate() + dias)
+    return f.toISOString().slice(0, 10)
+  }
+
+  it('alarga la salida sin tocar la entrada', async () => {
+    const reserva = db.reservas.find((r) => r.estado === 'confirmada' && r.habitacionId)!
+    const nuevaSalida = sumar(reserva.salida, 1)
+
+    const movida = await reservasService.reprogramar(reserva.id, { salida: nuevaSalida })
+
+    expect(movida.salida).toBe(nuevaSalida)
+    expect(movida.entrada).toBe(reserva.entrada)
+  })
+
+  it('a quien ya entró no se le mueve la entrada', async () => {
+    const enCasa = db.reservas.find((r) => r.estado === 'enCasa')!
+    await expect(
+      reservasService.reprogramar(enCasa.id, { entrada: sumar(enCasa.entrada, 1) }),
+    ).rejects.toMatchObject({ mensaje: expect.stringContaining('check-in') })
+  })
+
+  it('pero sí se le puede alargar la salida', async () => {
+    const enCasa = db.reservas.find((r) => r.estado === 'enCasa')!
+    const nuevaSalida = sumar(enCasa.salida, 1)
+    const choque = db.reservas.some(
+      (r) =>
+        r.id !== enCasa.id &&
+        r.habitacionId === enCasa.habitacionId &&
+        !['cancelada', 'noShow', 'salida'].includes(r.estado) &&
+        r.entrada < nuevaSalida &&
+        r.salida > enCasa.entrada,
+    )
+    if (choque) return
+
+    const movida = await reservasService.reprogramar(enCasa.id, { salida: nuevaSalida })
+    expect(movida.salida).toBe(nuevaSalida)
+  })
+
+  it('no deja pisar a otra reserva, y dice cuál', async () => {
+    // Se fabrica el choque: dos reservas seguidas en la misma habitación.
+    const primera = db.reservas.find((r) => r.estado === 'confirmada' && r.habitacionId)!
+    const segunda = await reservasService.crear({
+      localId: primera.localId,
+      huespedId: primera.huespedId,
+      tipoId: primera.tipoId,
+      habitacionId: primera.habitacionId,
+      entrada: primera.salida,
+      salida: sumar(primera.salida, 2),
+      adultos: 1,
+      ninos: 0,
+      canal: 'directo',
+      estado: 'confirmada',
+      regimen: 'desayuno',
+      tarifaNoche: 200,
+    })
+
+    await expect(
+      reservasService.reprogramar(primera.id, { salida: sumar(primera.salida, 1) }),
+    ).rejects.toMatchObject({ mensaje: expect.stringContaining(segunda.codigo) })
+  })
+
+  it('una reserva dura al menos una noche', async () => {
+    const reserva = db.reservas.find((r) => r.estado === 'confirmada')!
+    await expect(
+      reservasService.reprogramar(reserva.id, { salida: reserva.entrada }),
+    ).rejects.toMatchObject({ mensaje: expect.stringContaining('al menos una noche') })
+  })
+
+  it('una estancia cerrada no se mueve', async () => {
+    const cerrada = db.reservas.find((r) => r.estado === 'salida')
+    if (!cerrada) return
+    await expect(
+      reservasService.reprogramar(cerrada.id, { salida: sumar(cerrada.salida, 1) }),
+    ).rejects.toMatchObject({ mensaje: expect.stringContaining('cerrada') })
+  })
+
+  it('mover de habitación y de fecha a la vez es una sola operación', async () => {
+    const reserva = db.reservas.find((r) => r.estado === 'confirmada' && r.habitacionId)!
+    // `db.reservas` devuelve la fila viva: se copian las fechas antes de mover.
+    const entradaOriginal = reserva.entrada
+    const salidaOriginal = reserva.salida
+    const libre = db.habitaciones.find(
+      (h) =>
+        h.id !== reserva.habitacionId &&
+        h.limpieza !== 'fueraServicio' &&
+        !db.reservas.some(
+          (r) => r.habitacionId === h.id && !['cancelada', 'noShow', 'salida'].includes(r.estado),
+        ),
+    )
+    if (!libre) return
+
+    const movida = await reservasService.reprogramar(reserva.id, {
+      entrada: sumar(entradaOriginal, 1),
+      salida: sumar(salidaOriginal, 1),
+      habitacionId: libre.id,
+    })
+
+    expect(movida.habitacionId).toBe(libre.id)
+    expect(movida.entrada).toBe(sumar(entradaOriginal, 1))
+    expect(movida.salida).toBe(sumar(salidaOriginal, 1))
+  })
+})

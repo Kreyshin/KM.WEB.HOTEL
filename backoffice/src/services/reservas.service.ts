@@ -238,6 +238,79 @@ export const reservasService = {
   },
 
   /**
+   * Mover una reserva por el rack: de habitación, de fechas, o las dos cosas.
+   *
+   * Es el gesto con el que trabaja una recepción —arrastrar una barra— y por
+   * eso las reglas viven aquí y no en la pantalla: el mismo movimiento hecho
+   * desde la ficha tiene que encontrar los mismos límites.
+   *
+   * Tres de esas reglas son del oficio y no se negocian:
+   *
+   * 1. **Una estancia cerrada no se mueve.** Ya se facturó y ya está en el
+   *    Registro de Huéspedes.
+   * 2. **A quien ya entró no se le mueve la entrada.** Durmió aquí anoche; lo
+   *    único que puede cambiar es hasta cuándo se queda.
+   * 3. **Dos reservas no comparten noche en la misma habitación.** El choque
+   *    se dice con el código de la otra, que es lo que recepción necesita para
+   *    resolverlo.
+   */
+  async reprogramar(
+    reservaId: string,
+    cambios: { entrada?: string; salida?: string; habitacionId?: string },
+  ): Promise<ReservaResuelta> {
+    const reserva = db.reservas.find((r) => r.id === reservaId)
+    if (!reserva) throw { mensaje: 'Reserva no encontrada.' }
+    if (['salida', 'cancelada', 'noShow'].includes(reserva.estado)) {
+      throw { mensaje: `La ${reserva.codigo} ya está cerrada: no se mueve.` }
+    }
+
+    const entrada = cambios.entrada ?? reserva.entrada
+    const salida = cambios.salida ?? reserva.salida
+    const habitacionId = cambios.habitacionId ?? reserva.habitacionId
+
+    if (salida <= entrada) {
+      throw { mensaje: 'Una reserva dura al menos una noche.' }
+    }
+
+    if (reserva.estado === 'enCasa' && entrada !== reserva.entrada) {
+      throw {
+        mensaje: `La ${reserva.codigo} ya hizo el check-in. Puedes alargar o acortar la salida, no mover la entrada.`,
+      }
+    }
+
+    if (habitacionId) {
+      const destino = db.habitaciones.find((h) => h.id === habitacionId)
+      if (!destino) throw { mensaje: 'Habitación no encontrada.' }
+      if (destino.limpieza === 'fueraServicio') {
+        throw { mensaje: `La ${destino.numero} está fuera de servicio.` }
+      }
+
+      const choque = db.reservas.find(
+        (r) =>
+          r.id !== reservaId &&
+          r.habitacionId === habitacionId &&
+          !['cancelada', 'noShow', 'salida'].includes(r.estado) &&
+          r.entrada < salida &&
+          r.salida > entrada,
+      )
+      if (choque) {
+        throw {
+          mensaje: `La ${destino.numero} ya tiene la ${choque.codigo} del ${choque.entrada} al ${choque.salida}.`,
+        }
+      }
+    }
+
+    // El cambio de habitación arrastra ocupación y llave: eso ya lo sabe hacer
+    // `reasignar`, así que se delega en vez de repetir la mecánica.
+    if (habitacionId && habitacionId !== reserva.habitacionId) {
+      await this.reasignar(reservaId, habitacionId)
+    }
+
+    const actualizada = await repo.actualizar(reservaId, { entrada, salida })
+    return resolver(actualizada)
+  },
+
+  /**
    * Check-in: la reserva ocupa una habitación concreta.
    * Se exige habitación limpia porque entregar una llave de una habitación
    * sucia es el fallo de servicio más caro de un hotel.

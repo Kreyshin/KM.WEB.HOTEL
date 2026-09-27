@@ -1,18 +1,31 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useCarga } from '@/composables/useCarga'
-import BarraReserva from '@/components/planning/BarraReserva.vue'
+import HsIcono from '@/components/hotel/HsIcono.vue'
+import BarraReserva, { type ModoArrastre } from '@/components/planning/BarraReserva.vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmBotonIcono from '@/components/ui/KmBotonIcono.vue'
 import KmButton from '@/components/ui/KmButton.vue'
 import KmDrawer from '@/components/ui/KmDrawer.vue'
+import KmField from '@/components/ui/KmField.vue'
+import KmInput from '@/components/ui/KmInput.vue'
+import KmNumero from '@/components/ui/KmNumero.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
+import { huespedesService } from '@/services/huespedes.service'
 import { reservasService } from '@/services/reservas.service'
+import { resolverTarifa } from '@/services/tarifas.service'
 import { useLocalStore } from '@/stores/local.store'
 import { useUiStore } from '@/stores/ui.store'
-import type { ApiError, HabitacionResuelta, ReservaResuelta } from '@/types'
+import type {
+  ApiError,
+  CanalReserva,
+  HabitacionResuelta,
+  Huesped,
+  Regimen,
+  ReservaResuelta,
+} from '@/types'
 import type { OpcionSelect } from '@/types/ui'
-import { etiquetaCanal, formatearSoles } from '@/utils/formato'
+import { etiquetaCanal, etiquetaRegimen, formatearSoles } from '@/utils/formato'
 import { etiquetaLimpieza, etiquetaReserva, tonoReserva } from '@/utils/habitaciones'
 
 /**
@@ -52,13 +65,25 @@ const seleccionada = ref<ReservaResuelta | null>(null)
 const panelAbierto = ref(false)
 const moviendoA = ref<string | number | undefined>('')
 
-/** Arrastre en curso: qué reserva y sobre qué fila está ahora mismo. */
+/**
+ * Arrastre en curso.
+ *
+ * Guarda las dos dimensiones del rack a la vez, porque el gesto las mezcla:
+ * subir o bajar cambia de habitación, ir a los lados cambia de fecha, y una
+ * diagonal hace las dos cosas de un tirón. `modo` dice si se mueve la estancia
+ * entera o se está tirando de un borde.
+ */
 const arrastre = ref<{
   reservaId: string
+  modo: ModoArrastre
   sobre: string | null
   vetada: boolean
   /** Píxeles recorridos en vertical: la barra acompaña al dedo. */
   dy: number
+  /** Noches recorridas en horizontal, ya redondeadas a columna. */
+  dCol: number
+  /** Por qué no se puede soltar aquí, para decirlo en el acto. */
+  motivo: string
 } | null>(null)
 
 // ── El eje de tiempo ─────────────────────────────────────────────────────────
@@ -186,78 +211,205 @@ async function cargar() {
   }
 }
 
-onMounted(cargar)
+onMounted(async () => {
+  await cargar()
+  try {
+    const { items } = await huespedesService.consultar({
+      porPagina: 500,
+      filtros: { activo: true },
+    })
+    huespedes.value = items
+  } catch {
+    // Sin la lista todavía se puede vender: se da de alta al huésped.
+  }
+})
 watch([inicio, () => localStore.localId], cargar)
 
-function mover(dias: number) {
+/** Desplaza el tramo visible. Distinto de mover una reserva. */
+function desplazarTramo(dias: number) {
   inicio.value = sumarDias(inicio.value, dias)
 }
 
-// ── Gesto 1: arrastrar una reserva a otra habitación ─────────────────────────
+// ── Gesto 1: mover una reserva por el rack ───────────────────────────────────
 
-/** ¿Cabe esta reserva en esa habitación sin pisar a nadie? */
-function cabeEn(habitacionId: string, reserva: ReservaResuelta) {
+/**
+ * ¿Cabe esta reserva en esa habitación, con estas fechas?
+ *
+ * Se comprueba en el cliente mientras el dedo se mueve para poder pintar el
+ * veto en el acto; el servicio lo vuelve a comprobar al soltar, que es donde
+ * manda. Duplicar la regla aquí es a propósito: un rack que solo avisa después
+ * de soltar obliga a deshacer, y deshacer en un rack es reordenar el hotel.
+ */
+function porQueNoCabe(
+  habitacionId: string,
+  reserva: ReservaResuelta,
+  entrada: string,
+  salida: string,
+): string {
   const destino = habitaciones.value.find((h) => h.id === habitacionId)
-  if (!destino || destino.limpieza === 'fueraServicio') return false
-  return !reservas.value.some(
+  if (!destino) return 'Esa fila no es una habitación.'
+  if (destino.limpieza === 'fueraServicio') {
+    return `La ${destino.numero} está fuera de servicio.`
+  }
+  if (reserva.estado === 'enCasa' && entrada !== reserva.entrada) {
+    return `${reserva.codigo} ya hizo el check-in: solo se puede mover la salida.`
+  }
+  const choque = reservas.value.find(
     (r) =>
       r.id !== reserva.id &&
       r.habitacionId === habitacionId &&
-      r.entrada < reserva.salida &&
-      r.salida > reserva.entrada,
+      !['cancelada', 'noShow', 'salida'].includes(r.estado) &&
+      r.entrada < salida &&
+      r.salida > entrada,
   )
+  if (choque) {
+    const nombre = choque.huesped?.apellidos ?? choque.codigo
+    return `La ${destino.numero} ya la tiene ${nombre} esas noches.`
+  }
+  return ''
 }
 
+/** Las reservas cerradas se miran pero no se mueven. */
+const estaFijada = (r: ReservaResuelta) => ['salida', 'cancelada', 'noShow'].includes(r.estado)
+
 /**
- * Arrastrar y abrir la ficha son el mismo botón, así que el `click` que sigue
- * a un arrastre hay que descartarlo: soltar una reserva en otra habitación no
- * es pedir verla.
+ * Arrastrar y abrir la ficha son el mismo elemento, así que el `click` que
+ * sigue a un arrastre hay que descartarlo: soltar una reserva en otro sitio
+ * no es pedir verla.
  */
 const huboArrastre = ref(false)
 
-function empezarArrastre(evento: PointerEvent, reserva: ReservaResuelta) {
-  if (evento.button !== 0) return
+/**
+ * Ancho real de una noche, en píxeles.
+ *
+ * Se mide de una celda de verdad en vez de calcularlo: las columnas son
+ * fracciones de la rejilla y su ancho cambia con la ventana, así que el número
+ * bueno solo lo sabe el navegador. Se mide al empezar cada arrastre, que es
+ * cuando importa.
+ */
+function anchoColumna(): number {
+  const celda = document.querySelector<HTMLElement>('[data-columna]')
+  return celda?.getBoundingClientRect().width || 1
+}
+
+/** Las fechas que tendría la reserva con el desplazamiento actual. */
+function fechasPropuestas(reserva: ReservaResuelta, modo: ModoArrastre, dCol: number) {
+  const entrada = modo === 'fin' ? reserva.entrada : sumarDias(reserva.entrada, dCol)
+  const salida = modo === 'inicio' ? reserva.salida : sumarDias(reserva.salida, dCol)
+  return { entrada, salida }
+}
+
+function empezarArrastre(evento: PointerEvent, reserva: ReservaResuelta, modo: ModoArrastre) {
+  if (evento.button !== 0 || estaFijada(reserva)) return
+  evento.preventDefault()
+
+  const xInicial = evento.clientX
   const yInicial = evento.clientY
-  arrastre.value = { reservaId: reserva.id, sobre: null, vetada: false, dy: 0 }
+  const paso = anchoColumna()
+
+  arrastre.value = {
+    reservaId: reserva.id,
+    modo,
+    sobre: reserva.habitacionId ?? null,
+    vetada: false,
+    dy: 0,
+    dCol: 0,
+    motivo: '',
+  }
 
   const alMover = (e: PointerEvent) => {
-    const bajo = document.elementFromPoint(e.clientX, e.clientY)
-    const fila = bajo?.closest<HTMLElement>('[data-habitacion]')
-    const id = fila?.dataset.habitacion ?? null
     if (!arrastre.value) return
-    arrastre.value.sobre = id
-    arrastre.value.dy = e.clientY - yInicial
-    if (Math.abs(arrastre.value.dy) > 4) huboArrastre.value = true
-    arrastre.value.vetada = Boolean(id) && id !== reserva.habitacionId && !cabeEn(id!, reserva)
+
+    // Estirar un borde no cambia de habitación: el gesto es solo horizontal.
+    if (modo === 'mover') {
+      const bajo = document.elementFromPoint(e.clientX, e.clientY)
+      const fila = bajo?.closest<HTMLElement>('[data-habitacion]')
+      arrastre.value.sobre = fila?.dataset.habitacion ?? arrastre.value.sobre
+      arrastre.value.dy = e.clientY - yInicial
+    }
+
+    arrastre.value.dCol = Math.round((e.clientX - xInicial) / paso)
+
+    if (Math.abs(e.clientX - xInicial) > 4 || Math.abs(e.clientY - yInicial) > 4) {
+      huboArrastre.value = true
+    }
+
+    const { entrada, salida } = fechasPropuestas(reserva, modo, arrastre.value.dCol)
+    const destino = arrastre.value.sobre ?? reserva.habitacionId
+
+    if (salida <= entrada) {
+      arrastre.value.vetada = true
+      arrastre.value.motivo = 'Una reserva dura al menos una noche.'
+    } else if (destino) {
+      arrastre.value.motivo = porQueNoCabe(destino, reserva, entrada, salida)
+      arrastre.value.vetada = Boolean(arrastre.value.motivo)
+    }
   }
 
   const alSoltar = async () => {
     window.removeEventListener('pointermove', alMover)
     window.removeEventListener('pointerup', alSoltar)
-    const destino = arrastre.value?.sobre
+
+    const estado = arrastre.value
     arrastre.value = null
     // El `click` llega justo después; se limpia cuando ya ha pasado.
     setTimeout(() => (huboArrastre.value = false), 0)
-    if (!destino || destino === reserva.habitacionId) return
-    await reasignar(reserva, destino)
+    if (!estado) return
+
+    const destino = estado.sobre ?? reserva.habitacionId
+    const cambiaHabitacion = Boolean(destino) && destino !== reserva.habitacionId
+    if (!estado.dCol && !cambiaHabitacion) return
+
+    if (estado.vetada) {
+      ui.error(estado.motivo || 'Ahí no cabe.')
+      return
+    }
+
+    await mover(reserva, estado.modo, estado.dCol, cambiaHabitacion ? destino! : undefined)
   }
 
   window.addEventListener('pointermove', alMover)
   window.addEventListener('pointerup', alSoltar)
 }
 
-async function reasignar(reserva: ReservaResuelta, habitacionId: string) {
+/**
+ * El movimiento contra el servicio.
+ *
+ * El mensaje dice **qué pasó**, no «guardado»: mover una reserva es un cambio
+ * que alguien va a tener que explicar al huésped, y conviene ver el resultado
+ * escrito antes de cerrar la pantalla.
+ */
+async function mover(
+  reserva: ReservaResuelta,
+  modo: ModoArrastre,
+  dCol: number,
+  habitacionId?: string,
+) {
+  const { entrada, salida } = fechasPropuestas(reserva, modo, dCol)
   try {
-    await reservasService.reasignar(reserva.id, habitacionId)
-    const numero = habitaciones.value.find((h) => h.id === habitacionId)?.numero
-    ui.exito(`${reserva.codigo} pasa a la ${numero}.`)
+    const actualizada = await reservasService.reprogramar(reserva.id, {
+      entrada,
+      salida,
+      habitacionId,
+    })
+    const nombre = reserva.huesped?.apellidos ?? reserva.codigo
+    const numero = habitaciones.value.find(
+      (h) => h.id === (habitacionId ?? reserva.habitacionId),
+    )?.numero
+    ui.exito(
+      dCol
+        ? `${nombre}: ${entrada} → ${salida} en la ${numero}.`
+        : `${nombre} pasa a la ${numero}.`,
+    )
     await cargar()
-    if (seleccionada.value?.id === reserva.id) {
-      seleccionada.value = reservas.value.find((r) => r.id === reserva.id) ?? null
-    }
+    if (seleccionada.value?.id === reserva.id) seleccionada.value = actualizada
   } catch (e) {
-    ui.error((e as ApiError).mensaje ?? 'No se pudo cambiar la habitación.')
+    ui.error((e as ApiError).mensaje ?? 'No se pudo mover la reserva.')
   }
+}
+
+async function reasignar(reserva: ReservaResuelta, habitacionId: string) {
+  await mover(reserva, 'mover', 0, habitacionId)
 }
 
 // ── Gesto 2: barrer noches vacías para vender ────────────────────────────────
@@ -293,21 +445,151 @@ function enSeleccion(habitacionId: string, columna: number) {
 }
 
 /**
- * De momento el rack no crea la reserva: lleva los datos ya puestos a la
- * agenda, que es donde vive el formulario completo. Vender desde aquí sin
- * pedir huésped sería crear una reserva a medias.
+ * La venta se cierra aquí mismo.
+ *
+ * Antes el rack marcaba las noches y mandaba a otra pantalla a rellenar el
+ * formulario. Eso rompe el gesto: quien barre unas noches está vendiendo, y
+ * hacerle cambiar de sitio para terminar es pedirle que empiece otra vez.
+ *
+ * Lo único que el rack no sabe es **quién** duerme ahí, así que eso es lo que
+ * pregunta —y admite darlo de alta sin salir—; la habitación, las fechas y la
+ * tarifa ya las conoce.
  */
 const venta = ref<{ habitacion: HabitacionResuelta; entrada: string; salida: string } | null>(null)
+const guardandoVenta = ref(false)
+const erroresVenta = ref<Record<string, string>>({})
+const huespedes = ref<Huesped[]>([])
+
+const nuevaVenta = ref({
+  huespedId: '' as string | number | undefined,
+  nuevoHuesped: { nombres: '', apellidos: '', documento: '', telefono: '' },
+  adultos: 2,
+  ninos: 0,
+  canal: 'directo' as CanalReserva,
+  regimen: 'desayuno' as Regimen,
+  tarifaNoche: 0,
+})
+
+/** Sin huésped elegido, se está dando uno de alta. */
+const altaDeHuesped = computed(() => !nuevaVenta.value.huespedId)
+
+const opcionesHuesped = computed<OpcionSelect[]>(() => [
+  { valor: '', etiqueta: '+ Huésped nuevo' },
+  ...huespedes.value.map((h) => ({
+    valor: h.id,
+    etiqueta: `${h.apellidos}, ${h.nombres}${h.frecuente ? ' · frecuente' : ''}`,
+  })),
+])
+
+const opcionesCanal: OpcionSelect[] = (
+  ['directo', 'telefono', 'web', 'booking', 'expedia', 'corporativo'] as CanalReserva[]
+).map((c) => ({ valor: c, etiqueta: etiquetaCanal[c] }))
+
+const opcionesRegimen: OpcionSelect[] = (
+  ['soloAlojamiento', 'desayuno', 'mediaPension', 'pensionCompleta'] as Regimen[]
+).map((r) => ({ valor: r, etiqueta: etiquetaRegimen[r] }))
+
+const nochesVenta = computed(() => {
+  if (!venta.value) return 0
+  const ms = new Date(venta.value.salida).getTime() - new Date(venta.value.entrada).getTime()
+  return Math.max(1, Math.round(ms / 86_400_000))
+})
+
+const totalVenta = computed(() => nochesVenta.value * (nuevaVenta.value.tarifaNoche || 0))
 
 function abrirVenta(s: { habitacionId: string; desde: number; hasta: number }) {
   const habitacion = habitaciones.value.find((h) => h.id === s.habitacionId)
   if (!habitacion) return
   const desde = Math.min(s.desde, s.hasta)
   const hasta = Math.max(s.desde, s.hasta)
-  venta.value = {
-    habitacion,
-    entrada: sumarDias(inicio.value, desde),
-    salida: sumarDias(inicio.value, hasta + 1),
+  const entrada = sumarDias(inicio.value, desde)
+
+  venta.value = { habitacion, entrada, salida: sumarDias(inicio.value, hasta + 1) }
+  erroresVenta.value = {}
+
+  // La tarifa se propone resuelta —base, temporada y canal— para que no haya
+  // que ir a buscarla: es el número que el recepcionista dice por teléfono.
+  nuevaVenta.value = {
+    huespedId: '',
+    nuevoHuesped: { nombres: '', apellidos: '', documento: '', telefono: '' },
+    adultos: Math.min(2, habitacion.tipo?.capacidad ?? 2),
+    ninos: 0,
+    canal: 'directo',
+    regimen: habitacion.tipo?.regimenIncluido ?? 'desayuno',
+    tarifaNoche: habitacion.tipo
+      ? resolverTarifa(habitacion.tipo.id, entrada, 'directo').precio
+      : 0,
+  }
+}
+
+/** Al cambiar de canal, la tarifa se recalcula: cada canal tiene su ajuste. */
+watch(
+  () => nuevaVenta.value.canal,
+  (canal) => {
+    const tipo = venta.value?.habitacion.tipo
+    if (!tipo || !venta.value) return
+    nuevaVenta.value.tarifaNoche = resolverTarifa(tipo.id, venta.value.entrada, canal).precio
+  },
+)
+
+async function confirmarVenta() {
+  const v = venta.value
+  if (!v) return
+  erroresVenta.value = {}
+  guardandoVenta.value = true
+
+  try {
+    let huespedId = String(nuevaVenta.value.huespedId ?? '')
+
+    if (!huespedId) {
+      const datos = nuevaVenta.value.nuevoHuesped
+      if (!datos.nombres.trim() || !datos.apellidos.trim()) {
+        erroresVenta.value.apellidos = 'Nombre y apellidos, para poder llamarle.'
+        return
+      }
+      if (!datos.documento.trim()) {
+        erroresVenta.value.documento = 'El Registro de Huéspedes lo exige.'
+        return
+      }
+      const creado = await huespedesService.crear({
+        tipoDocumento: 'dni',
+        documento: datos.documento.trim(),
+        nombres: datos.nombres.trim(),
+        apellidos: datos.apellidos.trim(),
+        telefono: datos.telefono.trim() || undefined,
+        frecuente: false,
+        activo: true,
+      })
+      huespedId = creado.id
+      huespedes.value = [creado, ...huespedes.value]
+    }
+
+    await reservasService.crear({
+      localId: localStore.localId ?? '',
+      huespedId,
+      tipoId: v.habitacion.tipoId,
+      habitacionId: v.habitacion.id,
+      entrada: v.entrada,
+      salida: v.salida,
+      adultos: nuevaVenta.value.adultos,
+      ninos: nuevaVenta.value.ninos,
+      canal: nuevaVenta.value.canal,
+      estado: 'confirmada',
+      regimen: nuevaVenta.value.regimen,
+      tarifaNoche: nuevaVenta.value.tarifaNoche,
+    })
+
+    ui.exito(
+      `Vendidas ${nochesVenta.value} noche${nochesVenta.value === 1 ? '' : 's'} en la ${v.habitacion.numero}.`,
+    )
+    venta.value = null
+    await cargar()
+  } catch (e) {
+    const err = e as ApiError
+    erroresVenta.value = err.campos ?? {}
+    ui.error(err.mensaje ?? 'No se pudo cerrar la venta.')
+  } finally {
+    guardandoVenta.value = false
   }
 }
 
@@ -329,8 +611,8 @@ async function moverDesdePanel() {
     <!-- El eje de tiempo es la navegación, no un filtro. -->
     <header class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <KmBotonIcono icono="anterior" etiqueta="Semana anterior" @click="mover(-7)" />
-        <KmBotonIcono icono="siguiente" etiqueta="Semana siguiente" @click="mover(7)" />
+        <KmBotonIcono icono="anterior" etiqueta="Semana anterior" @click="desplazarTramo(-7)" />
+        <KmBotonIcono icono="siguiente" etiqueta="Semana siguiente" @click="desplazarTramo(7)" />
         <KmButton variante="secundario" tamano="sm" @click="inicio = hoy">Hoy</KmButton>
         <p class="hs-titulo-seccion ml-2 text-tinta">{{ mesVisible }}</p>
       </div>
@@ -463,12 +745,18 @@ async function moverDesdePanel() {
               @pointerdown="h.limpieza !== 'fueraServicio' && empezarSeleccion(h.id, i)"
             />
 
-            <!-- Las reservas, por encima de la rejilla -->
+            <!--
+              Las reservas, por encima de la rejilla.
+
+              La capa entera es transparente al puntero y solo las barras lo
+              reciben: si el envoltorio lo captase, cubriría la fila completa y
+              el barrido para vender nunca llegaría a las celdas de debajo.
+            -->
             <div
               class="pointer-events-none absolute inset-y-0 right-0"
               :style="{ left: `${ANCHO_HABITACION}px` }"
             >
-              <div class="pointer-events-auto relative h-full">
+              <div class="relative h-full">
                 <BarraReserva
                   v-for="t in tramosDe(h.id)"
                   :key="t.reserva.id"
@@ -480,7 +768,11 @@ async function moverDesdePanel() {
                   :corta-derecha="t.cortaDerecha"
                   :arrastrando="arrastre?.reservaId === t.reserva.id"
                   :desplazada="arrastre?.reservaId === t.reserva.id ? arrastre.dy : 0"
-                  @arrastrar="empezarArrastre($event, t.reserva)"
+                  :columnas-movidas="arrastre?.reservaId === t.reserva.id ? arrastre.dCol : 0"
+                  :modo="arrastre?.reservaId === t.reserva.id ? arrastre.modo : undefined"
+                  :vetada="arrastre?.reservaId === t.reserva.id && arrastre.vetada"
+                  :fijada="estaFijada(t.reserva)"
+                  @arrastrar="(e, modo) => empezarArrastre(e, t.reserva, modo)"
                   @abrir="abrirReserva(t.reserva)"
                 />
               </div>
@@ -597,58 +889,241 @@ async function moverDesdePanel() {
     </div>
   </KmDrawer>
 
-  <!-- Venta desde el rack -->
+  <!-- Venta desde el rack: se cierra aquí, sin cambiar de pantalla. -->
   <KmDrawer
     :model-value="Boolean(venta)"
     titulo="Vender estas noches"
-    ancho="sm"
+    ancho="md"
     @update:model-value="venta = null"
   >
-    <div v-if="venta" class="flex flex-col gap-4">
-      <p class="text-sm text-tenue">
-        Has marcado unas noches libres. Para cerrar la venta falta el huésped, que se pide en la
-        agenda de reservas.
-      </p>
-      <dl class="rounded-card border border-linea bg-panel-2 p-4 text-sm">
-        <div class="flex justify-between py-1">
-          <dt class="text-tenue">Habitación</dt>
-          <dd class="font-semibold text-tinta">
-            {{ venta.habitacion.numero }} · {{ venta.habitacion.tipo?.nombre }}
-          </dd>
+    <div v-if="venta" class="flex flex-col gap-5">
+      <!-- Lo que el rack ya sabe. No se pregunta: se enseña. -->
+      <div class="hs-venta-resumen">
+        <div>
+          <p class="hs-venta-rotulo"><HsIcono nombre="cama" tamano="xs" /> Habitación</p>
+          <p class="hs-venta-dato">{{ venta.habitacion.numero }}</p>
+          <p class="hs-venta-pie">{{ venta.habitacion.tipo?.nombre }}</p>
         </div>
-        <div class="flex justify-between py-1">
-          <dt class="text-tenue">Entrada</dt>
-          <dd class="font-semibold text-tinta tabular-nums">{{ venta.entrada }}</dd>
+        <div>
+          <p class="hs-venta-rotulo"><HsIcono nombre="llegada" tamano="xs" /> Entrada</p>
+          <p class="hs-venta-dato">
+            {{ venta.entrada.slice(8, 10) }}/{{ venta.entrada.slice(5, 7) }}
+          </p>
+          <p class="hs-venta-pie">por la tarde</p>
         </div>
-        <div class="flex justify-between py-1">
-          <dt class="text-tenue">Salida</dt>
-          <dd class="font-semibold text-tinta tabular-nums">{{ venta.salida }}</dd>
+        <div>
+          <p class="hs-venta-rotulo"><HsIcono nombre="salida" tamano="xs" /> Salida</p>
+          <p class="hs-venta-dato">
+            {{ venta.salida.slice(8, 10) }}/{{ venta.salida.slice(5, 7) }}
+          </p>
+          <p class="hs-venta-pie">por la mañana</p>
         </div>
-        <div class="flex justify-between py-1">
-          <dt class="text-tenue">Tarifa base</dt>
-          <dd class="font-semibold text-tinta tabular-nums">
-            {{ formatearSoles(venta.habitacion.tipo?.tarifaBase ?? 0) }}
-          </dd>
+        <div>
+          <p class="hs-venta-rotulo"><HsIcono nombre="noche" tamano="xs" /> Noches</p>
+          <p class="hs-venta-dato">{{ nochesVenta }}</p>
+          <p class="hs-venta-pie">es lo que se cobra</p>
         </div>
-      </dl>
+      </div>
+
+      <!-- Lo único que el rack no sabe: quién duerme ahí. -->
+      <section class="flex flex-col gap-3">
+        <h3 class="hs-titulo-seccion flex items-center gap-2 text-tinta">
+          <HsIcono nombre="huesped" tamano="sm" /> A nombre de quién
+        </h3>
+
+        <KmField
+          v-slot="{ id }"
+          label="Huésped"
+          ayuda="Busca por apellido; si no está, se da de alta abajo."
+        >
+          <KmSelect
+            :id="id"
+            v-model="nuevaVenta.huespedId"
+            :opciones="opcionesHuesped"
+            placeholder="Buscar huésped…"
+          />
+        </KmField>
+
+        <div v-if="altaDeHuesped" class="hs-alta-huesped">
+          <p class="mb-3 text-xs text-tenue">
+            Huésped nuevo. Con el nombre basta para cerrar la venta; el resto se completa al llegar,
+            que es cuando se ve el documento.
+          </p>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <KmField
+              v-slot="{ id, invalido }"
+              label="Nombres"
+              :error="erroresVenta.nombres"
+              requerido
+            >
+              <KmInput
+                :id="id"
+                v-model="nuevaVenta.nuevoHuesped.nombres"
+                placeholder="María"
+                :invalido="invalido"
+              />
+            </KmField>
+            <KmField
+              v-slot="{ id, invalido }"
+              label="Apellidos"
+              :error="erroresVenta.apellidos"
+              requerido
+            >
+              <KmInput
+                :id="id"
+                v-model="nuevaVenta.nuevoHuesped.apellidos"
+                placeholder="Quispe Rojas"
+                :invalido="invalido"
+              />
+            </KmField>
+            <KmField
+              v-slot="{ id, invalido }"
+              label="Documento"
+              :error="erroresVenta.documento"
+              requerido
+            >
+              <KmInput
+                :id="id"
+                v-model="nuevaVenta.nuevoHuesped.documento"
+                placeholder="DNI o pasaporte"
+                :invalido="invalido"
+              />
+            </KmField>
+            <KmField v-slot="{ id }" label="Teléfono">
+              <KmInput
+                :id="id"
+                v-model="nuevaVenta.nuevoHuesped.telefono"
+                placeholder="9xx xxx xxx"
+              />
+            </KmField>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cómo se vende. -->
+      <section class="flex flex-col gap-3">
+        <h3 class="hs-titulo-seccion flex items-center gap-2 text-tinta">
+          <HsIcono nombre="tarifa" tamano="sm" /> Cómo se vende
+        </h3>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <KmField v-slot="{ id }" label="Adultos" :error="erroresVenta.adultos">
+            <KmNumero :id="id" v-model="nuevaVenta.adultos" :min="1" :max="8" />
+          </KmField>
+          <KmField v-slot="{ id }" label="Niños">
+            <KmNumero :id="id" v-model="nuevaVenta.ninos" :min="0" :max="6" />
+          </KmField>
+          <KmField
+            v-slot="{ id }"
+            label="Canal"
+            ayuda="Cambia la tarifa: cada canal tiene su ajuste."
+          >
+            <KmSelect :id="id" v-model="nuevaVenta.canal" :opciones="opcionesCanal" />
+          </KmField>
+          <KmField v-slot="{ id }" label="Régimen">
+            <KmSelect :id="id" v-model="nuevaVenta.regimen" :opciones="opcionesRegimen" />
+          </KmField>
+        </div>
+
+        <KmField
+          v-slot="{ id }"
+          label="Tarifa por noche"
+          :error="erroresVenta.tarifaNoche"
+          ayuda="Propuesta con la temporada y el canal ya aplicados. Se puede pactar otra."
+        >
+          <KmNumero
+            :id="id"
+            v-model="nuevaVenta.tarifaNoche"
+            :min="0"
+            :decimales="2"
+            prefijo="S/"
+          />
+        </KmField>
+
+        <!-- El total, grande: es el número que se dice en voz alta. -->
+        <div class="hs-venta-total">
+          <span>{{ nochesVenta }} × {{ formatearSoles(nuevaVenta.tarifaNoche) }}</span>
+          <strong class="hs-display">{{ formatearSoles(totalVenta) }}</strong>
+        </div>
+      </section>
     </div>
 
     <template #footer>
-      <KmButton variante="fantasma" @click="venta = null">Cerrar</KmButton>
-      <KmButton
-        @click="
-          $router.push({
-            name: 'reservas',
-            query: {
-              habitacion: venta?.habitacion.id,
-              entrada: venta?.entrada,
-              salida: venta?.salida,
-            },
-          })
-        "
-      >
-        Continuar en reservas
-      </KmButton>
+      <KmButton variante="fantasma" @click="venta = null">Cancelar</KmButton>
+      <KmButton :cargando="guardandoVenta" @click="confirmarVenta">Confirmar reserva</KmButton>
     </template>
   </KmDrawer>
 </template>
+
+<style scoped>
+/*
+ * El resumen de la venta: los cuatro datos que el rack ya sabe, en cifras
+ * grandes. Se enseñan en vez de preguntarse, y con ese tamaño se leen a la
+ * distancia a la que se está cuando se habla por teléfono.
+ */
+.hs-venta-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--hs-border);
+  border-radius: var(--hs-radio-card, 12px);
+  background-color: var(--hs-surface-2);
+}
+
+.hs-venta-rotulo {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hs-muted);
+}
+
+.hs-venta-dato {
+  margin: 0.25rem 0 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--hs-text);
+}
+
+.hs-venta-pie {
+  margin: 0.125rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--hs-muted);
+}
+
+.hs-alta-huesped {
+  padding: 1rem;
+  border: 1px dashed var(--hs-border);
+  border-radius: var(--hs-radio-card, 12px);
+  background-color: var(--hs-surface-2);
+}
+
+/* El total se dice en voz alta, así que se ve de lejos. */
+.hs-venta-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--hs-radio-card, 12px);
+  background-color: var(--hs-azul-50);
+  font-size: 0.8125rem;
+  color: var(--hs-muted);
+}
+
+.hs-venta-total strong {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--hs-primary-strong);
+}
+</style>
