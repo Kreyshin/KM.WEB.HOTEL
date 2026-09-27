@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
+import PlanoPiso from '@/components/alojamiento/PlanoPiso.vue'
+import HsIcono from '@/components/hotel/HsIcono.vue'
 import KmCatalogo from '@/components/ui/KmCatalogo.vue'
 import KmCheckbox from '@/components/ui/KmCheckbox.vue'
 import KmField from '@/components/ui/KmField.vue'
@@ -117,6 +119,11 @@ onMounted(async () => {
 watch(() => localStore.localId, cargarApoyo)
 
 /** Las que pueden comunicar: todas las de la sede menos ella misma. */
+function abrirPlano() {
+  colocando.value = true
+  if (!pisoPlano.value) pisoPlano.value = pisos.value[0]?.id ?? ''
+}
+
 function candidatasComunicadas(numeroActual: string) {
   return hermanas.value.filter((h) => h.numero !== numeroActual)
 }
@@ -157,6 +164,56 @@ const opcionesCamarera = computed<OpcionSelect[]>(() => [
 ])
 
 /** Habitaciones sin camarera del turno: el hueco que deja sucia una planta. */
+/**
+ * El modo «colocar en el plano».
+ *
+ * Antes la posición se tecleaba como dos porcentajes en el alta, que es algo
+ * que nadie en un hotel va a hacer. Y el plano vivía en una pantalla aparte que
+ * solo pintaba. Las dos mitades se juntan aquí: **colocar el inventario es
+ * mantenimiento del inventario**, y este es su sitio.
+ */
+const colocando = ref(false)
+const pisoPlano = ref('')
+const guardandoPlano = ref(false)
+
+const pisosConPlano = computed(() =>
+  pisos.value.map((p) => ({
+    valor: p.id,
+    etiqueta: `${p.nombre} · ${hermanas.value.filter((h) => h.pisoId === p.id).length} hab.`,
+  })),
+)
+
+const habitacionesDelPiso = computed(() =>
+  hermanas.value.filter((h) => h.pisoId === (pisoPlano.value || pisos.value[0]?.id)),
+)
+
+/**
+ * Se mueve en local y se guarda al soltar. Pedir al servidor cada píxel haría
+ * el arrastre a tirones y llenaría la bitácora de ruido.
+ */
+function moverEnPlano(id: string, posX: number, posY: number) {
+  const h = hermanas.value.find((x) => x.id === id)
+  if (!h) return
+  h.posX = posX
+  h.posY = posY
+  guardarPosicion(h)
+}
+
+let pendiente: ReturnType<typeof setTimeout> | undefined
+function guardarPosicion(h: HabitacionResuelta) {
+  clearTimeout(pendiente)
+  guardandoPlano.value = true
+  pendiente = setTimeout(async () => {
+    try {
+      await habitacionesService.actualizar(h.id, { posX: h.posX, posY: h.posY })
+    } catch {
+      ui.error('No se pudo guardar la posición.')
+    } finally {
+      guardandoPlano.value = false
+    }
+  }, 350)
+}
+
 const sinAsignar = computed(
   () => hermanas.value.filter((h) => h.limpieza === 'sucia' && !h.asignadaAId).length,
 )
@@ -192,7 +249,55 @@ const sinAsignar = computed(
       </div>
     </div>
 
+    <!-- Dos oficios: el registro de lo que existe y dónde está cada cosa. -->
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="hs-lentes" role="group" aria-label="Cómo trabajar el inventario">
+        <button
+          type="button"
+          class="hs-lente"
+          :class="{ 'es-activa': !colocando }"
+          :aria-pressed="!colocando"
+          @click="colocando = false"
+        >
+          <HsIcono nombre="cama" tamano="sm" /> Inventario
+        </button>
+        <button
+          type="button"
+          class="hs-lente"
+          :class="{ 'es-activa': colocando }"
+          :aria-pressed="colocando"
+          @click="abrirPlano"
+        >
+          <HsIcono nombre="arrastrar" tamano="sm" /> Colocar en el plano
+        </button>
+      </div>
+
+      <p v-if="colocando" class="flex items-center gap-2 text-xs text-tenue">
+        <HsIcono nombre="arrastrar" tamano="xs" />
+        Arrastra cada habitación a su sitio, o muévela con las flechas.
+        <span v-if="guardandoPlano" class="text-azul">Guardando…</span>
+      </p>
+    </div>
+
+    <!-- El plano de una planta, en modo edición. -->
+    <section v-if="colocando" class="flex flex-col gap-3">
+      <div class="w-full sm:w-72">
+        <KmSelect v-model="pisoPlano" :opciones="pisosConPlano" etiqueta="Planta" />
+      </div>
+      <PlanoPiso
+        :habitaciones="habitacionesDelPiso"
+        modo="colocar"
+        @mover="moverEnPlano"
+        @seleccionar="() => {}"
+      />
+      <p class="text-xs text-tenue">
+        Las habitaciones se alinean solas a una rejilla. Shift con las flechas mueve de cuatro en
+        cuatro. Lo que coloques aquí es lo que verá el tablero en su lente de plano.
+      </p>
+    </section>
+
     <KmCatalogo
+      v-else
       :key="localStore.localId ?? 'sin-sede'"
       titulo="Habitaciones"
       subtitulo="El inventario físico de la sede: lo que existe, de qué tipo es y en qué estado está."

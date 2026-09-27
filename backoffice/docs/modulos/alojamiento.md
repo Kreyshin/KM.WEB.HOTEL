@@ -44,11 +44,17 @@ Para sacarla del inventario está **bloqueada**, que es reversible y deja consta
 
 El resto de catálogos se activan y desactivan. Una habitación no: su eje es **bloqueada**, que es un estado de ocupación con su motivo y su fecha. Darle además un `activo` duplicaría el estado y crearía la pregunta de cuál de los dos manda. Por eso `KmCatalogo` admite ahora `sin-estado`.
 
-## Plano por piso
+### Colocar en el plano
 
-Las habitaciones colocadas donde están de verdad, en dos hileras a ambos lados del pasillo.
+El segundo modo de esta pantalla. Se elige la planta y **se arrastra cada habitación a su sitio**; las flechas la mueven con el teclado y `Shift` la mueve de cuatro en cuatro, porque ningún gesto puede ser solo de arrastre. Se alinean solas a una rejilla invisible, así que el plano queda recto sin pelearse con él.
 
-Sirve para lo que una lista no puede responder: _¿qué hay libre cerca del ascensor?_, _¿puedo dar dos contiguas a esta familia?_. Al tocar una habitación se abre su ficha con aforo, vista y último cambio.
+Lo que se coloque aquí es lo que verá el **tablero** en su lente de plano.
+
+::: info Por qué está aquí y no en una pantalla aparte
+Había un «Plano por piso» que pintaba exactamente lo mismo que el tablero —llamaba al mismo servicio— pero sin ninguna acción encima: era el tablero con los botones quitados. Y la posición solo se podía teclear como dos porcentajes en el alta, que es algo que nadie en un hotel va a hacer.
+
+El plano tenía dos oficios y no cumplía ninguno, así que cada mitad se fue a donde sirve: **operar sobre el espacio** es una lente del tablero, y **colocar el inventario** es mantenimiento del inventario, o sea, esta pantalla.
+:::
 
 ## Tipos de habitación
 

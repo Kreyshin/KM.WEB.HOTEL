@@ -4,6 +4,19 @@ La pantalla que se cuelga de la pared. Muestra todas las habitaciones agrupadas 
 
 Es el equivalente hotelero del monitor de cocina de un restaurante: la misma idea de pantalla que se mira de lejos y se toca de paso, con la habitación-noche en lugar del plato.
 
+## Las dos lentes
+
+El mismo estado, leído de dos maneras.
+
+| Lente          | Qué enseña                                                      | Para qué                                                                                                                                        |
+| -------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Cuadrícula** | Una tarjeta por habitación, ordenadas por número                | Repasar planta por planta                                                                                                                       |
+| **Plano**      | Cada habitación donde está de verdad, a ambos lados del pasillo | Contestar **dónde**: qué hay libre cerca del ascensor, si dos contiguas se pueden dar a una familia, qué le queda a una camarera en esta planta |
+
+Las dos llevan **las mismas acciones**. En el plano, al tocar una habitación sale su ficha con quién está dentro, los consumos y los botones de check-out y de avanzar la limpieza. El plano no es una vista de consulta: es el tablero.
+
+La posición de cada habitación se fija en **Alojamiento → Habitaciones → Colocar en el plano**.
+
 ## Qué trae cada tarjeta
 
 - El **número** en grande y el tipo debajo.

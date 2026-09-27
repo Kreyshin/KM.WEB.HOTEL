@@ -1223,57 +1223,6 @@ async function moverDesdePanel() {
 </template>
 
 <style scoped>
-/* El conmutador de lentes: dos maneras de mirar lo mismo, no dos pantallas. */
-.hs-lentes {
-  display: flex;
-  gap: 0.125rem;
-  padding: 0.1875rem;
-  border: 1px solid var(--hs-border);
-  border-radius: var(--hs-radio-card, 12px);
-  background-color: var(--hs-surface-2);
-}
-
-.hs-lente {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  min-height: var(--km-toque, 2.25rem);
-  padding-inline: 0.875rem;
-  border-radius: var(--hs-radio-control, 8px);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--hs-muted);
-  cursor: pointer;
-  transition:
-    background-color var(--km-mov-rapido) var(--km-curva),
-    color var(--km-mov-rapido) var(--km-curva);
-}
-
-.hs-lente:hover {
-  color: var(--hs-text);
-}
-
-.hs-lente.es-activa {
-  background-color: var(--hs-surface);
-  color: var(--hs-text);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
-}
-
-/* Qué se está mirando. Cambia con la lente porque el alcance no es el mismo. */
-.hs-alcance {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--hs-muted);
-}
-
-.hs-alcance strong {
-  font-weight: 600;
-  color: var(--hs-text);
-}
-
 /*
  * El resumen de la venta: los cuatro datos que el rack ya sabe, en cifras
  * grandes. Se enseñan en vez de preguntarse, y con ese tamaño se leen a la

@@ -38,7 +38,7 @@ export const modulos: ModuloNav[] = [
       {
         nombreRuta: 'tablero',
         etiqueta: 'Tablero de habitaciones',
-        descripcion: 'Estado de ocupación y limpieza, en tiempo real',
+        descripcion: 'Estado en vivo, en cuadrícula o sobre el plano',
       },
     ],
   },
@@ -50,12 +50,7 @@ export const modulos: ModuloNav[] = [
       {
         nombreRuta: 'habitaciones',
         etiqueta: 'Habitaciones',
-        descripcion: 'Inventario físico, estado y bloqueos',
-      },
-      {
-        nombreRuta: 'plano',
-        etiqueta: 'Plano por piso',
-        descripcion: 'Distribución real de cada planta',
+        descripcion: 'Inventario físico y su lugar en el plano',
       },
       {
         nombreRuta: 'tipos',
@@ -96,13 +91,13 @@ export const modulos: ModuloNav[] = [
   },
   {
     id: 'pisos',
-    etiqueta: 'Pisos',
+    etiqueta: 'Housekeeping',
     icono: 'M4 20h16M6 20V9l6-4 6 4v11M10 20v-5h4v5',
     secciones: [
       {
         nombreRuta: 'limpieza',
-        etiqueta: 'Housekeeping',
-        descripcion: 'Tareas del turno y carga por camarera',
+        etiqueta: 'Tareas del turno',
+        descripcion: 'Reparto de trabajo y carga por camarera',
       },
       {
         nombreRuta: 'incidencias',

@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useCarga } from '@/composables/useCarga'
+import PlanoPiso from '@/components/alojamiento/PlanoPiso.vue'
+import HsIcono from '@/components/hotel/HsIcono.vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
+import KmButton from '@/components/ui/KmButton.vue'
+import KmDrawer from '@/components/ui/KmDrawer.vue'
 import KmSwitch from '@/components/ui/KmSwitch.vue'
 import KmTabs from '@/components/ui/KmTabs.vue'
 import { habitacionesService } from '@/services/habitaciones.service'
@@ -99,6 +103,24 @@ watch(
 )
 
 const todas = computed(() => pisos.value.flatMap((p) => p.habitaciones))
+
+/**
+ * Las dos lentes del tablero.
+ *
+ * El plano era una pantalla aparte que pintaba exactamente este mismo dato
+ * —llamaba al mismo servicio— pero sin ninguna acción encima: era el tablero
+ * con los botones quitados. Aquí recupera las acciones y deja de ser una
+ * pantalla que solo se mira.
+ */
+const lente = ref<'cuadricula' | 'plano'>('cuadricula')
+
+const lentes = [
+  { valor: 'cuadricula' as const, etiqueta: 'Cuadrícula', icono: 'cama' as const },
+  { valor: 'plano' as const, etiqueta: 'Plano', icono: 'llave' as const },
+]
+
+/** La habitación tocada en el plano: su ficha sale en un panel lateral. */
+const enPlano = ref<HabitacionResuelta | null>(null)
 
 const pestanas = computed(() => [
   { valor: 'todas', etiqueta: 'Todas', contador: todas.value.length },
@@ -202,6 +224,27 @@ async function cerrarEstancia(h: HabitacionResuelta) {
     <div class="flex flex-wrap items-center justify-between gap-4">
       <KmTabs v-model="filtro" :pestanas="pestanas" />
 
+      <!--
+        Dos lentes sobre el mismo estado. La cuadrícula ordena por número y
+        sirve para repasar; el plano contesta dónde está, que es lo que una
+        lista no puede: qué hay libre cerca del ascensor, si dos contiguas se
+        pueden dar a una familia.
+      -->
+      <div class="hs-lentes" role="group" aria-label="Cómo mirar el tablero">
+        <button
+          v-for="l in lentes"
+          :key="l.valor"
+          type="button"
+          class="hs-lente"
+          :class="{ 'es-activa': lente === l.valor }"
+          :aria-pressed="lente === l.valor"
+          @click="lente = l.valor"
+        >
+          <HsIcono :nombre="l.icono" tamano="sm" />
+          {{ l.etiqueta }}
+        </button>
+      </div>
+
       <div class="flex items-center gap-4">
         <p v-if="ultimoRefresco" class="text-xs text-tenue tabular-nums">
           Actualizado {{ desdeHace(ultimoRefresco.toISOString()) }}
@@ -242,7 +285,16 @@ async function cerrarEstancia(h: HabitacionResuelta) {
         <div class="hs-filete flex-1" role="presentation" />
       </div>
 
-      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+      <!-- Lente de plano: el mismo estado, leído en el espacio. -->
+      <template v-if="lente === 'plano'">
+        <PlanoPiso
+          :habitaciones="piso.habitaciones"
+          :seleccionada-id="enPlano?.id"
+          @seleccionar="enPlano = $event"
+        />
+      </template>
+
+      <ul v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         <li
           v-for="h in piso.habitaciones"
           :key="h.id"
@@ -314,6 +366,88 @@ async function cerrarEstancia(h: HabitacionResuelta) {
         </li>
       </ul>
     </section>
+
+    <!--
+      La ficha de lo tocado en el plano. Lleva las mismas acciones que la
+      tarjeta: el plano no es una vista de consulta, es el tablero.
+    -->
+    <KmDrawer
+      :model-value="Boolean(enPlano)"
+      :titulo="enPlano ? `Habitación ${enPlano.numero}` : ''"
+      ancho="sm"
+      @update:model-value="enPlano = null"
+    >
+      <div v-if="enPlano" class="flex flex-col gap-4">
+        <div>
+          <p class="hs-titulo-pagina text-tinta">{{ enPlano.numero }}</p>
+          <p class="mt-1 text-sm text-tenue">
+            {{ enPlano.tipo?.nombre }} · {{ enPlano.tipo?.camas }}
+          </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <KmBadge :tono="tonoOcupacion[enPlano.ocupacion]" punto>
+            {{ etiquetaOcupacion[enPlano.ocupacion] }}
+          </KmBadge>
+          <KmBadge :tono="tonoLimpieza[enPlano.limpieza]">
+            {{ etiquetaLimpieza[enPlano.limpieza] }}
+          </KmBadge>
+        </div>
+
+        <p v-if="enPlano.nota" class="hs-aviso-nota">{{ enPlano.nota }}</p>
+
+        <dl class="flex flex-col gap-3 text-sm">
+          <div v-if="enPlano.estancia">
+            <dt class="hs-etiqueta text-tenue">Dentro ahora</dt>
+            <dd class="text-tinta">
+              {{ enPlano.estancia.adultos }} adulto{{ enPlano.estancia.adultos === 1 ? '' : 's' }}
+              <template v-if="enPlano.estancia.ninos">
+                · {{ enPlano.estancia.ninos }} menor(es)
+              </template>
+              · {{ formatearSoles(enPlano.estancia.consumos) }} en consumos
+            </dd>
+          </div>
+          <div>
+            <dt class="hs-etiqueta text-tenue">Aforo</dt>
+            <dd class="text-tinta">
+              {{ enPlano.tipo?.capacidad }} personas · máx. {{ enPlano.tipo?.capacidadMaxima }}
+            </dd>
+          </div>
+          <div v-if="enPlano.vista">
+            <dt class="hs-etiqueta text-tenue">Vista</dt>
+            <dd class="text-tinta">{{ enPlano.vista }}</dd>
+          </div>
+          <div>
+            <dt class="hs-etiqueta text-tenue">Último cambio</dt>
+            <dd class="text-tinta">{{ desdeHace(enPlano.actualizada) }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <template #footer>
+        <KmButton
+          v-if="enPlano?.ocupacion === 'ocupada'"
+          variante="secundario"
+          @click="cerrarEstancia(enPlano!)"
+        >
+          Check-out
+        </KmButton>
+        <KmButton
+          :disabled="enPlano?.limpieza === 'fueraServicio'"
+          @click="avanzarLimpieza(enPlano!)"
+        >
+          {{
+            enPlano?.limpieza === 'sucia'
+              ? 'Empezar limpieza'
+              : enPlano?.limpieza === 'enLimpieza'
+                ? 'Pasar a revisar'
+                : enPlano?.limpieza === 'inspeccion'
+                  ? 'Aprobar'
+                  : 'Marcar sucia'
+          }}
+        </KmButton>
+      </template>
+    </KmDrawer>
 
     <!-- Leyenda: el tablero se usa de pie, sin manual. -->
     <footer class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-tenue">

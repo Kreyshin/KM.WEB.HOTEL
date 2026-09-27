@@ -48,12 +48,9 @@ const rutas: RouteRecordRaw[] = [
         component: () => import('@/views/alojamiento/HabitacionesView.vue'),
         meta: { titulo: 'Habitaciones' },
       },
-      {
-        path: 'habitaciones/plano',
-        name: 'plano',
-        component: () => import('@/views/alojamiento/PlanoView.vue'),
-        meta: { titulo: 'Plano por piso' },
-      },
+      // El plano dejó de ser pantalla: operar sobre él es una lente del
+      // tablero, y colocar las habitaciones es un modo de Habitaciones.
+      { path: 'habitaciones/plano', redirect: { name: 'tablero' } },
       {
         path: 'tipos',
         name: 'tipos',
