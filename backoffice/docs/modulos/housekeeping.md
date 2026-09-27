@@ -8,9 +8,31 @@ El responsable es del **trabajo**, no del inmueble: vive en la tarea del turno,
 no en la ficha de la habitación. Alojamiento lo enseña —lo deriva de la tarea
 abierta— pero no lo cambia, para que no haya dos respuestas a la misma pregunta.
 
+## Abrir el trabajo del día
+
+Casi todas las tareas nacen solas: un check-out abre su tarea de salida. Las que faltan se abren desde aquí, de dos maneras.
+
+**Abrir el turno** es el gesto de las nueve de la mañana. Mira qué habitaciones quedaron sucias sin tarea y abre una por cada una: **en estancia** si el huésped sigue dentro —sus cosas no se tocan— y **salida** si ya se fue. El botón dice cuántas abrirá antes de pulsarlo, y no repite: una habitación que ya tiene tarea abierta se salta.
+
+**Nueva tarea** es para lo que no entra en ese barrido: un recado de toallas, un repaso antes de enseñar una habitación, una profunda que se decide en el momento. Solo ofrece habitaciones sin tarea abierta, porque dos tareas para la misma puerta son dos camareras subiendo a llamar a la vez. Si se intenta, el sistema lo dice con el número delante.
+
+Pulsando los minutos de una tarjeta se abre esa misma ficha: prioridad, minutos, recado, camarera — y cancelarla, que la borra del tablero sin tocar la habitación.
+
+## Mover el trabajo
+
+Tres maneras, y ninguna es la única:
+
+- **Arrastrar** la tarjeta a otra columna.
+- Los botones **Avanzar** —o **Aprobar** en la última— y **←** para devolverla.
+- Con la tarjeta enfocada, las flechas **←** y **→** del teclado.
+
+La marcha atrás no es un adorno. La gobernanta que inspecciona y encuentra el baño a medias devuelve la tarea a **en curso**, y eso vuelve a poner la habitación en limpieza. Sin ella, el único camino sería cerrarla mintiendo y abrir otra.
+
 ## La carga del turno
 
 Arriba, una barra por camarera con sus tareas y sus **minutos estimados**. Sirve para repartir antes de que se acumule, no para descubrir a las dos de la tarde que una persona tiene el triple que las demás.
+
+Las barras se mueven en el mismo gesto que la tarjeta: se calculan con lo que hay en pantalla, sin volver a preguntar al servidor.
 
 ## Las cuatro columnas
 

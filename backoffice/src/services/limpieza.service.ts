@@ -7,6 +7,7 @@ import type {
   TareaResuelta,
 } from '@/types'
 import { minutosPorTipo } from '@/utils/habitaciones'
+import { errorCampo } from './mock/reglas'
 import { db, latencia, persistir } from './mock/db'
 import { crearRepositorio } from './mock/repositorio'
 
@@ -57,20 +58,101 @@ export const limpiezaService = {
     return latencia(items)
   },
 
-  async crear(datos: NuevaTareaLimpieza): Promise<TareaLimpieza> {
-    return repo.crear({
+  /**
+   * Abre una tarea a mano.
+   *
+   * La mayoría nacen solas —al hacer check-out, al cerrar el turno—, pero la
+   * gobernanta necesita poder abrir una por su cuenta: un cliente que pide
+   * toallas, un baño que se revisa antes de enseñar la habitación, una
+   * profunda que se decide en el momento.
+   *
+   * Dos tareas abiertas para la misma habitación son dos camareras subiendo a
+   * la misma puerta, así que se rechaza con el número delante.
+   */
+  async crear(datos: NuevaTareaLimpieza): Promise<TareaResuelta> {
+    const habitacion = db.habitaciones.find((h) => h.id === datos.habitacionId)
+    if (!habitacion) throw errorCampo('habitacionId', 'Elige una habitación.')
+
+    const abierta = db.tareas.find(
+      (t) => t.habitacionId === datos.habitacionId && t.estado !== 'terminada',
+    )
+    if (abierta) {
+      throw errorCampo(
+        'habitacionId',
+        `La habitación ${habitacion.numero} ya tiene una tarea abierta. Trabájala en el tablero.`,
+      )
+    }
+
+    const creada = await repo.crear({
       ...datos,
       minutosEstimados: datos.minutosEstimados || minutosPorTipo[datos.tipo],
       creada: new Date().toISOString(),
     } as Omit<TareaLimpieza, 'id'>)
+    return resolver(creada)
   },
 
   /**
-   * Avanza la tarea y arrastra el estado de limpieza de la habitación.
+   * Abre de golpe las tareas del turno.
+   *
+   * El gesto de todas las mañanas: mirar qué habitaciones quedaron sucias y
+   * repartirlas. Hacerlo tarjeta a tarjeta es el trabajo de una gobernanta
+   * durante diez minutos; aquí es un botón. Salta las que ya tienen tarea
+   * abierta y las que están fuera de servicio, que no se limpian: se arreglan.
+   *
+   * El tipo lo dice la habitación: si está ocupada es una limpieza **en
+   * estancia** —la huésped vuelve esta noche, sus cosas siguen dentro—; si
+   * está libre es una **salida**, que es más larga y deja la habitación
+   * vendible.
+   */
+  async generarDelTurno(localId: string): Promise<TareaResuelta[]> {
+    const pisos = db.pisos.filter((p) => p.localId === localId).map((p) => p.id)
+    const candidatas = db.habitaciones.filter(
+      (h) =>
+        pisos.includes(h.pisoId) &&
+        h.limpieza === 'sucia' &&
+        !db.tareas.some((t) => t.habitacionId === h.id && t.estado !== 'terminada'),
+    )
+
+    const nuevas: TareaResuelta[] = []
+    for (const h of candidatas) {
+      const tipo = h.ocupacion === 'ocupada' ? 'estancia' : 'salida'
+      const creada = await repo.crear({
+        habitacionId: h.id,
+        tipo,
+        estado: 'pendiente',
+        // Una salida con reserva entrando hoy corre más que las demás.
+        prioridad: h.ocupacion === 'reservada' ? 'alta' : 'normal',
+        minutosEstimados: minutosPorTipo[tipo],
+        creada: new Date().toISOString(),
+      } as Omit<TareaLimpieza, 'id'>)
+      nuevas.push(resolver(creada))
+    }
+    return nuevas
+  },
+
+  /** Cuántas tareas abriría «generar el turno» ahora mismo. */
+  pendientesDeGenerar(localId: string): number {
+    const pisos = db.pisos.filter((p) => p.localId === localId).map((p) => p.id)
+    return db.habitaciones.filter(
+      (h) =>
+        pisos.includes(h.pisoId) &&
+        h.limpieza === 'sucia' &&
+        !db.tareas.some((t) => t.habitacionId === h.id && t.estado !== 'terminada'),
+    ).length
+  },
+
+  /**
+   * Mueve la tarea de fase y arrastra el estado de limpieza de la habitación.
+   *
+   * Va en los dos sentidos: la gobernanta que inspecciona y encuentra el baño
+   * a medias devuelve la tarea a «en curso», y eso vuelve a poner la
+   * habitación en limpieza. Sin marcha atrás, el único camino sería cerrarla
+   * mintiendo y abrir otra.
+   *
    * Cerrar una tarea NO libera la habitación: la ocupación es asunto de
    * recepción, aunque la habitación quede impecable.
    */
-  async cambiarEstado(id: string, estado: EstadoTarea): Promise<TareaLimpieza> {
+  async cambiarEstado(id: string, estado: EstadoTarea): Promise<TareaResuelta> {
     const tarea = db.tareas.find((t) => t.id === id)
     if (!tarea) throw { mensaje: 'Tarea no encontrada.' }
 
@@ -81,10 +163,12 @@ export const limpiezaService = {
     }
     persistir()
 
-    return repo.actualizar(id, {
-      estado,
-      terminada: estado === 'terminada' ? new Date().toISOString() : undefined,
-    })
+    return resolver(
+      await repo.actualizar(id, {
+        estado,
+        terminada: estado === 'terminada' ? new Date().toISOString() : undefined,
+      }),
+    )
   },
 
   /**
@@ -94,21 +178,15 @@ export const limpiezaService = {
    * habitación, para mantener las dos copias de acuerdo; ahora no hay segunda
    * copia que mantener.
    */
-  async asignar(id: string, usuarioId?: string): Promise<TareaLimpieza> {
-    return repo.actualizar(id, { asignadaAId: usuarioId })
+  async asignar(id: string, usuarioId?: string): Promise<TareaResuelta> {
+    return resolver(await repo.actualizar(id, { asignadaAId: usuarioId }))
   },
 
-  /** Carga del turno por camarera: minutos pendientes y tareas a su nombre. */
-  async cargaPorCamarera(localId: string) {
-    const tareas = await this.tablero(localId)
-    const camareras = db.usuarios.filter((u) => u.rol === 'gobernanta')
-    return camareras.map((u) => {
-      const suyas = tareas.filter((t) => t.asignadaAId === u.id && t.estado !== 'terminada')
-      return {
-        usuario: u,
-        tareas: suyas.length,
-        minutos: suyas.reduce((total, t) => total + t.minutosEstimados, 0),
-      }
-    })
+  /** Cambia lo que se decide sobre la marcha: prisa, minutos y recado. */
+  async editar(
+    id: string,
+    cambios: Partial<Pick<TareaLimpieza, 'prioridad' | 'minutosEstimados' | 'notas' | 'tipo'>>,
+  ): Promise<TareaResuelta> {
+    return resolver(await repo.actualizar(id, cambios))
   },
 }
