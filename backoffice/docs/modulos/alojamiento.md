@@ -4,12 +4,45 @@ Todo lo que existe físicamente y lo que se publica para vender.
 
 ## Habitaciones
 
-El inventario en modo lista, para cuando se busca una concreta. Cada fila muestra los dos estados, la camarera del turno y cuánto lleva sin cambiar.
+El registro de lo que el hotel **tiene**. El tablero contesta «¿qué pasa ahora?» y el plano «¿dónde está?»; esta pantalla contesta **«¿qué habitaciones existen y qué se sabe de cada una?»**.
 
-Desde aquí se hacen dos cosas con frecuencia:
+### Las cifras del inventario
 
-- **Reasignar la camarera** del turno con el desplegable de la fila.
-- **Avanzar la limpieza** con el enlace que aparece según el estado: «Empezar» si está sucia, «Aprobar» si espera inspección.
+No son las de la jornada: son las que se miran al planificar.
+
+| Cifra               | Qué dice                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| Habitaciones        | Cuántas existen en la sede                                   |
+| Vendibles hoy       | Las que no están bloqueadas                                  |
+| Ocupación           | Ocupadas sobre vendibles                                     |
+| Fuera de servicio   | La que más duele: cada una es una habitación que no se vende |
+| Sucias sin camarera | El hueco que deja una planta sin terminar                    |
+
+### Alta, edición y baja
+
+Una habitación se da de alta con lo que no cambia de un día para otro: **número** (único en la sede), **piso**, **tipo** —de donde salen la tarifa base, el aforo y el régimen—, **vista**, **habitaciones comunicadas**, **nota** y su **posición en el plano**.
+
+Los dos estados no se editan en el alta. La habitación nace libre y limpia, y a partir de ahí los mueve la operación: recepción la ocupa, housekeeping la limpia.
+
+::: tip Las comunicadas son dinero
+Dos habitaciones unidas por puerta interior se venden juntas a una familia. Sin registrarlo, la recepción lo sabe de memoria y esa información se pierde el día que cambia la persona del mostrador.
+:::
+
+::: warning Una habitación con historia no se borra
+Si alguien durmió ahí, el número aparece en su factura, en el Registro de Huéspedes y en la producción del mes. Borrarla dejaría esos documentos apuntando al vacío, así que el sistema se niega y lo dice con el motivo: _«La habitación 101 tiene estancias en el histórico. Bloquéala en vez de borrarla.»_
+
+Para sacarla del inventario está **bloqueada**, que es reversible y deja constancia del porqué. Al borrar una que sí se puede, deja además de figurar en las comunicadas de las demás.
+:::
+
+### Lo que se hace a diario desde aquí
+
+- **Reasignar la camarera** del turno con el desplegable de la tarjeta.
+- **Avanzar la limpieza** con el enlace que cambia según el estado: «Empezar limpieza» si está sucia, «Pasar a inspección», «Dar por limpia».
+- Ver **quién está dentro** y desde cuándo, sin abrir nada.
+
+### Por qué no tiene activo/inactivo
+
+El resto de catálogos se activan y desactivan. Una habitación no: su eje es **bloqueada**, que es un estado de ocupación con su motivo y su fecha. Darle además un `activo` duplicaría el estado y crearía la pregunta de cuál de los dos manda. Por eso `KmCatalogo` admite ahora `sin-estado`.
 
 ## Plano por piso
 

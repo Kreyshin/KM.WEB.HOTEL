@@ -1,4 +1,4 @@
-<script setup lang="ts" generic="T extends { id: string; activo: boolean }">
+<script setup lang="ts" generic="T extends { id: string; activo?: boolean }">
 import { copiar } from '@/utils/copiar'
 import { computed, ref, shallowRef, useSlots, type Ref } from 'vue'
 import KmBadge from './KmBadge.vue'
@@ -75,6 +75,18 @@ const props = withDefaults(
      * `KmCambioVista` recuerda.
      */
     vistaPorDefecto?: 'tabla' | 'tarjetas'
+    /**
+     * Para catálogos sin eje activo/inactivo.
+     *
+     * Casi todo lo que se mantiene se puede desactivar, pero no todo. Una
+     * habitación no está «inactiva»: está bloqueada, que es un estado de
+     * ocupación con su motivo y su fecha. Forzarle un `activo` duplicaría ese
+     * estado y crearía la pregunta de cuál de los dos manda.
+     *
+     * Con esto puesto desaparecen el filtro, la columna y el interruptor de
+     * estado; todo lo demás del catálogo sigue igual.
+     */
+    sinEstado?: boolean
   }>(),
   {
     femenino: false,
@@ -82,6 +94,7 @@ const props = withDefaults(
     sinTarjeta: false,
     soloLectura: false,
     vistaPorDefecto: 'tabla',
+    sinEstado: false,
   },
 )
 
@@ -165,7 +178,8 @@ function abrirEdicion(fila: T) {
   const { id, ...resto } = copiar(fila) as T
   editandoId.value = id
   borrador.value = resto
-  activoOriginal.value = fila.activo
+  // Un catálogo sin eje de estado no tiene original que comparar.
+  activoOriginal.value = fila.activo ?? true
   estadoConfirmado = false
   errores.value = {}
   drawerAbierto.value = true
@@ -274,7 +288,9 @@ async function exportar(formato: 'csv' | 'excel') {
 
 const columnasTabla = computed<ColumnaTabla[]>(() => [
   ...props.columnas,
-  { clave: 'activo', etiqueta: 'Estado', clase: 'w-28', ordenable: true },
+  ...(props.sinEstado
+    ? []
+    : [{ clave: 'activo', etiqueta: 'Estado', clase: 'w-28', ordenable: true }]),
   { clave: '_acciones', etiqueta: '', clase: 'w-36 text-right' },
 ])
 
@@ -310,7 +326,12 @@ defineExpose({ recargar, abrirNuevo })
       <KmBusqueda v-model="consulta.buscar" :placeholder="`Buscar ${entidad}`" />
       <slot name="filtros" :consulta="consulta" />
       <div class="w-full sm:w-44">
-        <KmSelect v-model="filtroEstado" :opciones="opcionesEstado" etiqueta="Filtrar por estado" />
+        <KmSelect
+          v-if="!sinEstado"
+          v-model="filtroEstado"
+          :opciones="opcionesEstado"
+          etiqueta="Filtrar por estado"
+        />
       </div>
       <KmCambioVista v-if="slots.tarjeta" v-model="vista" :clave="entidad" class="ml-auto" />
       <template v-if="sinTarjeta">
@@ -439,7 +460,7 @@ defineExpose({ recargar, abrirNuevo })
         </fieldset>
 
         <KmCampoEstado
-          v-if="editandoId && !soloLectura"
+          v-if="editandoId && !soloLectura && !sinEstado"
           v-model="activoBorrador"
           :original="activoOriginal"
           :texto-activo="femenino ? 'Activa' : 'Activo'"

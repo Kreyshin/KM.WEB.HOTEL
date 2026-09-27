@@ -1,217 +1,592 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
-import KmBusqueda from '@/components/ui/KmBusqueda.vue'
-import KmCard from '@/components/ui/KmCard.vue'
+import KmCatalogo from '@/components/ui/KmCatalogo.vue'
+import KmCheckbox from '@/components/ui/KmCheckbox.vue'
+import KmField from '@/components/ui/KmField.vue'
+import KmInput from '@/components/ui/KmInput.vue'
+import KmNumero from '@/components/ui/KmNumero.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
-import KmTable from '@/components/ui/KmTable.vue'
 import { habitacionesService } from '@/services/habitaciones.service'
+import { pisosService } from '@/services/pisos.service'
+import { tiposService } from '@/services/tipos.service'
 import { usuariosService } from '@/services/usuarios.service'
 import { useLocalStore } from '@/stores/local.store'
 import { useUiStore } from '@/stores/ui.store'
-import type { EstadoLimpieza, HabitacionResuelta, Orden, Usuario } from '@/types'
+import type { EstadoLimpieza, HabitacionResuelta, Piso, TipoHabitacion, Usuario } from '@/types'
 import type { ColumnaTabla, OpcionSelect } from '@/types/ui'
-import { desdeHace } from '@/utils/formato'
+import { desdeHace, fechaCorta } from '@/utils/formato'
 import {
-  estadosLimpieza,
-  estadosOcupacion,
   etiquetaLimpieza,
   etiquetaOcupacion,
+  glifoLimpieza,
+  glifoOcupacion,
   tonoLimpieza,
   tonoOcupacion,
 } from '@/utils/habitaciones'
 
 /**
- * Inventario físico de habitaciones. A diferencia del tablero, aquí se trabaja
- * en modo lista: buscar una habitación concreta, ver de un vistazo sus dos
- * estados y reasignar la camarera del turno.
+ * El inventario físico del hotel.
+ *
+ * Esta pantalla es el registro de lo que el hotel **tiene**, no de lo que pasa
+ * hoy: aquí se dan de alta las habitaciones, se corrigen y se retiran. El
+ * tablero contesta «¿qué pasa ahora?» y el plano «¿dónde está?»; esta contesta
+ * «¿qué habitaciones existen y qué se sabe de cada una?».
+ *
+ * Los dos ejes de estado —ocupación y limpieza— se enseñan pero no se editan
+ * a mano en el alta: los mueve la operación. Lo que sí se gobierna desde aquí
+ * es lo que no cambia de un día para otro: a qué piso pertenece, de qué tipo
+ * es, qué vista tiene y con cuál comunica.
  */
 
 const localStore = useLocalStore()
 const ui = useUiStore()
 
-const habitaciones = ref<HabitacionResuelta[]>([])
+const pisos = ref<Piso[]>([])
+const tipos = ref<TipoHabitacion[]>([])
 const camareras = ref<Usuario[]>([])
-const { cargando, iniciar, terminar } = useCarga()
-const error = ref<string | null>(null)
-const buscar = ref('')
-const filtroOcupacion = ref<string | number | undefined>('')
-const filtroLimpieza = ref<string | number | undefined>('')
-const orden = ref<Orden | undefined>({ campo: 'numero', direccion: 'asc' })
+const resumen = ref<Awaited<ReturnType<typeof habitacionesService.resumen>> | null>(null)
+const hermanas = ref<HabitacionResuelta[]>([])
 
 const columnas: ColumnaTabla[] = [
-  { clave: 'numero', etiqueta: 'Habitación', clase: 'w-40', ordenable: true },
-  { clave: 'tipo', etiqueta: 'Tipo', clase: 'w-48' },
-  { clave: 'ocupacion', etiqueta: 'Ocupación', clase: 'w-40' },
-  { clave: 'limpieza', etiqueta: 'Limpieza', clase: 'w-48' },
-  { clave: 'asignadaAId', etiqueta: 'Camarera del turno', clase: 'w-56' },
-  { clave: 'actualizada', etiqueta: 'Último cambio', clase: 'w-40', ordenable: true },
+  { clave: 'numero', etiqueta: 'Habitación', clase: 'w-36', ordenable: true },
+  { clave: 'tipo', etiqueta: 'Tipo', clase: 'w-52' },
+  { clave: 'ocupacion', etiqueta: 'Ocupación', clase: 'w-36' },
+  { clave: 'limpieza', etiqueta: 'Limpieza', clase: 'w-44' },
+  { clave: 'vista', etiqueta: 'Vista', clase: 'w-36' },
+  { clave: 'actualizada', etiqueta: 'Último cambio', clase: 'w-36', ordenable: true },
 ]
 
-const opcionesOcupacion: OpcionSelect[] = [
-  { valor: '', etiqueta: 'Toda ocupación' },
-  ...estadosOcupacion.map((e) => ({ valor: e, etiqueta: etiquetaOcupacion[e] })),
-]
+const filtrosFijos = computed(() => ({ localId: localStore.localId ?? undefined }))
 
-const opcionesLimpieza: OpcionSelect[] = [
-  { valor: '', etiqueta: 'Toda limpieza' },
-  ...estadosLimpieza.map((e) => ({ valor: e, etiqueta: etiquetaLimpieza[e] })),
-]
+const opcionesPiso = computed<OpcionSelect[]>(() =>
+  pisos.value.map((p) => ({ valor: p.id, etiqueta: `${p.nombre} · nivel ${p.nivel}` })),
+)
+
+const opcionesTipo = computed<OpcionSelect[]>(() =>
+  tipos.value.map((t) => ({ valor: t.id, etiqueta: `${t.codigo} · ${t.nombre}` })),
+)
+
+/** El alta nace libre y limpia: una habitación nueva todavía no tiene historia. */
+const nuevo = (): Omit<HabitacionResuelta, 'id'> => ({
+  numero: '',
+  pisoId: pisos.value[0]?.id ?? '',
+  tipoId: tipos.value[0]?.id ?? '',
+  ocupacion: 'libre',
+  limpieza: 'limpia',
+  vista: '',
+  comunicaCon: [],
+  posX: 50,
+  posY: 50,
+  actualizada: new Date().toISOString(),
+})
+
+function validar(h: Omit<HabitacionResuelta, 'id'>): Record<string, string> {
+  const errores: Record<string, string> = {}
+  if (!h.numero.trim()) errores.numero = 'El número es obligatorio.'
+  if (!h.pisoId) errores.pisoId = 'Elige a qué piso pertenece.'
+  if (!h.tipoId) errores.tipoId = 'Elige el tipo: de ahí sale la tarifa y el aforo.'
+  return errores
+}
+
+async function cargarApoyo() {
+  const localId = localStore.localId
+  if (!localId) return
+  try {
+    const [listaPisos, listaTipos, listaCamareras, cifras, listaHermanas] = await Promise.all([
+      pisosService.consultar({ filtros: { localId }, porPagina: 200 }),
+      tiposService.consultar({ porPagina: 200 }),
+      usuariosService.personalDePisos(),
+      habitacionesService.resumen(localId),
+      habitacionesService.listarPorLocal(localId),
+    ])
+    pisos.value = listaPisos.items.filter((p) => p.activo)
+    tipos.value = listaTipos.items.filter((t) => t.activo)
+    camareras.value = listaCamareras
+    resumen.value = cifras
+    hermanas.value = listaHermanas
+  } catch {
+    ui.error('No se pudieron cargar los datos de apoyo.')
+  }
+}
+
+onMounted(async () => {
+  if (!localStore.localId) await localStore.cargar().catch(() => undefined)
+  await cargarApoyo()
+})
+watch(() => localStore.localId, cargarApoyo)
+
+/** Las que pueden comunicar: todas las de la sede menos ella misma. */
+function candidatasComunicadas(numeroActual: string) {
+  return hermanas.value.filter((h) => h.numero !== numeroActual)
+}
+
+function alternarComunicada(borrador: Omit<HabitacionResuelta, 'id'>, id: string) {
+  const actuales = borrador.comunicaCon ?? []
+  borrador.comunicaCon = actuales.includes(id)
+    ? actuales.filter((x) => x !== id)
+    : [...actuales, id]
+}
+
+const nombreHabitacion = (id: string) => hermanas.value.find((h) => h.id === id)?.numero ?? '—'
+
+/** Las camareras se asignan desde aquí porque el turno se reparte en lista. */
+async function asignar(h: HabitacionResuelta, usuarioId: string | number | undefined) {
+  try {
+    await habitacionesService.asignarCamarera(h.id, (usuarioId as string) || undefined)
+    ui.exito(`Habitación ${h.numero} reasignada.`)
+    await cargarApoyo()
+  } catch {
+    ui.error('No se pudo asignar la camarera.')
+  }
+}
+
+async function cambiarLimpieza(h: HabitacionResuelta, estado: EstadoLimpieza) {
+  try {
+    await habitacionesService.cambiarLimpieza(h.id, estado)
+    ui.exito(`Habitación ${h.numero}: ${etiquetaLimpieza[estado].toLowerCase()}.`)
+    await cargarApoyo()
+  } catch (e) {
+    ui.error((e as { mensaje?: string }).mensaje ?? 'No se pudo cambiar el estado.')
+  }
+}
 
 const opcionesCamarera = computed<OpcionSelect[]>(() => [
   { valor: '', etiqueta: 'Sin asignar' },
   ...camareras.value.map((u) => ({ valor: u.id, etiqueta: u.nombre })),
 ])
 
-async function cargar() {
-  const localId = localStore.localId
-  if (!localId) return
-  iniciar()
-  error.value = null
-  try {
-    ;[habitaciones.value, camareras.value] = await Promise.all([
-      habitacionesService.listarPorLocal(localId),
-      usuariosService.personalDePisos(),
-    ])
-  } catch (e) {
-    error.value = (e as { mensaje?: string }).mensaje ?? 'No se pudieron cargar las habitaciones.'
-  } finally {
-    terminar()
-  }
-}
-
-onMounted(async () => {
-  if (!localStore.localId) await localStore.cargar().catch(() => undefined)
-  cargar()
-})
-watch(() => localStore.localId, cargar)
-
-const normalizar = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
-
-const filtradas = computed(() => {
-  const t = normalizar(buscar.value.trim())
-  const lista = habitaciones.value.filter(
-    (h) =>
-      (!t || normalizar(`${h.numero} ${h.tipo?.nombre ?? ''} ${h.nota ?? ''}`).includes(t)) &&
-      (!filtroOcupacion.value || h.ocupacion === filtroOcupacion.value) &&
-      (!filtroLimpieza.value || h.limpieza === filtroLimpieza.value),
-  )
-  if (!orden.value) return lista
-  const { campo, direccion } = orden.value
-  const signo = direccion === 'desc' ? -1 : 1
-  return [...lista].sort(
-    (a, b) =>
-      signo *
-      String(a[campo as keyof HabitacionResuelta] ?? '').localeCompare(
-        String(b[campo as keyof HabitacionResuelta] ?? ''),
-        'es',
-        { numeric: true },
-      ),
-  )
-})
-
-async function cambiarLimpieza(h: HabitacionResuelta, estado: EstadoLimpieza) {
-  try {
-    await habitacionesService.cambiarLimpieza(h.id, estado)
-    ui.exito(`Habitación ${h.numero}: ${etiquetaLimpieza[estado].toLowerCase()}.`)
-    cargar()
-  } catch (e) {
-    ui.error((e as { mensaje?: string }).mensaje ?? 'No se pudo cambiar el estado.')
-  }
-}
-
-async function asignar(h: HabitacionResuelta, usuarioId: string | number | undefined) {
-  try {
-    await habitacionesService.asignarCamarera(h.id, (usuarioId as string) || undefined)
-    cargar()
-  } catch {
-    ui.error('No se pudo asignar la camarera.')
-  }
-}
+/** Habitaciones sin camarera del turno: el hueco que deja sucia una planta. */
+const sinAsignar = computed(
+  () => hermanas.value.filter((h) => h.limpieza === 'sucia' && !h.asignadaAId).length,
+)
 </script>
 
 <template>
-  <KmCard
-    titulo="Habitaciones"
-    subtitulo="Ocupación y limpieza son dos ejes independientes: una habitación puede estar libre y sucia."
-    sin-padding
-  >
-    <div class="flex flex-wrap items-center gap-3 border-b border-linea px-6 py-3">
-      <KmBusqueda v-model="buscar" placeholder="Buscar habitación" />
-      <div class="w-full sm:w-44">
-        <KmSelect v-model="filtroOcupacion" :opciones="opcionesOcupacion" etiqueta="Ocupación" />
+  <div class="flex flex-col gap-5">
+    <!--
+      Las cifras del inventario. No son las de la jornada —eso lo da el
+      tablero—: son las que se miran al planificar, y la de fuera de servicio
+      es la que más duele, porque cada una es una habitación que no se vende.
+    -->
+    <div v-if="resumen" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div class="hs-cifra">
+        <span class="hs-display hs-cifra-valor">{{ resumen.total }}</span>
+        <span class="hs-cifra-nombre">Habitaciones</span>
       </div>
-      <div class="w-full sm:w-48">
-        <KmSelect v-model="filtroLimpieza" :opciones="opcionesLimpieza" etiqueta="Limpieza" />
+      <div class="hs-cifra">
+        <span class="hs-display hs-cifra-valor">{{ resumen.vendibles }}</span>
+        <span class="hs-cifra-nombre">Vendibles hoy</span>
       </div>
-      <p class="ml-auto text-xs text-tenue tabular-nums">
-        {{ filtradas.length }} de {{ habitaciones.length }}
-      </p>
+      <div class="hs-cifra">
+        <span class="hs-display hs-cifra-valor">{{ resumen.ocupacion }}%</span>
+        <span class="hs-cifra-nombre">Ocupación</span>
+      </div>
+      <div class="hs-cifra" :class="{ 'es-alerta': (resumen.porLimpieza.fueraServicio ?? 0) > 0 }">
+        <span class="hs-display hs-cifra-valor">{{ resumen.porLimpieza.fueraServicio ?? 0 }}</span>
+        <span class="hs-cifra-nombre">Fuera de servicio</span>
+      </div>
+      <div class="hs-cifra" :class="{ 'es-aviso': sinAsignar > 0 }">
+        <span class="hs-display hs-cifra-valor">{{ sinAsignar }}</span>
+        <span class="hs-cifra-nombre">Sucias sin camarera</span>
+      </div>
     </div>
 
-    <KmTable
-      v-model:orden="orden"
+    <KmCatalogo
+      :key="localStore.localId ?? 'sin-sede'"
+      titulo="Habitaciones"
+      subtitulo="El inventario físico de la sede: lo que existe, de qué tipo es y en qué estado está."
+      entidad="habitación"
+      femenino
+      :servicio="habitacionesService"
+      sin-estado
       :columnas="columnas"
-      :filas="filtradas"
-      :cargando="cargando"
-      :error="error"
-      mensaje-vacio="Ninguna habitación coincide con el filtro."
-      @reintentar="cargar"
+      :nuevo="nuevo"
+      :validar="validar"
+      :filtros-fijos="filtrosFijos"
+      :orden="{ campo: 'numero', direccion: 'asc' }"
+      :nombre-de="(h: HabitacionResuelta) => h.numero"
+      ancho-drawer="lg"
+      vista-por-defecto="tarjetas"
+      :exportacion="[
+        { etiqueta: 'Número', valor: (h: HabitacionResuelta) => h.numero },
+        { etiqueta: 'Piso', valor: (h: HabitacionResuelta) => h.piso?.nombre ?? '' },
+        { etiqueta: 'Tipo', valor: (h: HabitacionResuelta) => h.tipo?.nombre ?? '' },
+        { etiqueta: 'Ocupación', valor: (h: HabitacionResuelta) => etiquetaOcupacion[h.ocupacion] },
+        { etiqueta: 'Limpieza', valor: (h: HabitacionResuelta) => etiquetaLimpieza[h.limpieza] },
+        { etiqueta: 'Vista', valor: (h: HabitacionResuelta) => h.vista ?? '' },
+      ]"
+      archivo="habitaciones"
+      @cambio="cargarApoyo"
     >
+      <!-- ── Tabla ────────────────────────────────────────────────────── -->
       <template #col-numero="{ fila }">
-        <span class="hs-display text-lg font-semibold text-tinta">{{ fila.numero }}</span>
-        <span class="block text-xs text-tenue">{{ fila.piso?.nombre }}</span>
+        <span class="hs-display text-base font-semibold text-tinta">{{ fila.numero }}</span>
+        <span class="block text-xs text-tenue">{{ fila.piso?.nombre ?? 'sin piso' }}</span>
       </template>
 
       <template #col-tipo="{ fila }">
-        <span class="text-sm text-tinta">{{ fila.tipo?.nombre }}</span>
-        <span class="block text-xs text-tenue">{{ fila.tipo?.camas }}</span>
+        <span class="text-sm text-tinta">{{ fila.tipo?.nombre ?? '—' }}</span>
+        <span class="block text-xs text-tenue">{{ fila.tipo?.camas ?? '' }}</span>
       </template>
 
       <template #col-ocupacion="{ fila }">
         <KmBadge :tono="tonoOcupacion[fila.ocupacion]" punto>
-          {{ etiquetaOcupacion[fila.ocupacion] }}
+          {{ glifoOcupacion[fila.ocupacion] }} {{ etiquetaOcupacion[fila.ocupacion] }}
         </KmBadge>
-        <span v-if="fila.nota" class="mt-1 block text-xs text-tenue">{{ fila.nota }}</span>
       </template>
 
       <template #col-limpieza="{ fila }">
-        <div class="flex items-center gap-2">
-          <KmBadge :tono="tonoLimpieza[fila.limpieza]">
-            {{ etiquetaLimpieza[fila.limpieza] }}
-          </KmBadge>
-          <button
-            v-if="fila.limpieza === 'sucia'"
-            type="button"
-            class="text-xs font-semibold text-azul hover:underline"
-            @click="cambiarLimpieza(fila, 'enLimpieza')"
-          >
-            Empezar
-          </button>
-          <button
-            v-else-if="fila.limpieza === 'inspeccion'"
-            type="button"
-            class="text-xs font-semibold text-azul hover:underline"
-            @click="cambiarLimpieza(fila, 'limpia')"
-          >
-            Aprobar
-          </button>
-        </div>
+        <KmBadge :tono="tonoLimpieza[fila.limpieza]">
+          {{ glifoLimpieza[fila.limpieza] }} {{ etiquetaLimpieza[fila.limpieza] }}
+        </KmBadge>
       </template>
 
-      <template #col-asignadaAId="{ fila }">
-        <KmSelect
-          :model-value="fila.asignadaAId ?? ''"
-          :opciones="opcionesCamarera"
-          etiqueta="Camarera asignada"
-          @update:model-value="(v) => asignar(fila, v)"
-        />
+      <template #col-vista="{ fila }">
+        <span class="text-sm text-tenue">{{ fila.vista || '—' }}</span>
       </template>
 
       <template #col-actualizada="{ fila }">
-        <span class="text-xs text-tenue tabular-nums">{{ desdeHace(fila.actualizada) }}</span>
+        <span class="text-xs text-tenue">{{ desdeHace(fila.actualizada) }}</span>
       </template>
-    </KmTable>
-  </KmCard>
+
+      <!-- ── Tarjeta ──────────────────────────────────────────────────── -->
+      <template #tarjeta="{ fila, editar, eliminar }">
+        <article class="hs-habitacion" :class="{ 'esta-fuera': fila.limpieza === 'fueraServicio' }">
+          <header class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="hs-display text-2xl leading-none font-semibold text-tinta">
+                {{ fila.numero }}
+              </p>
+              <p class="mt-1 truncate text-xs text-tenue">
+                {{ fila.piso?.nombre ?? 'sin piso' }} · {{ fila.tipo?.nombre ?? 'sin tipo' }}
+              </p>
+            </div>
+            <KmBadge :tono="tonoOcupacion[fila.ocupacion]" punto>
+              {{ glifoOcupacion[fila.ocupacion] }} {{ etiquetaOcupacion[fila.ocupacion] }}
+            </KmBadge>
+          </header>
+
+          <!-- Quién está dentro. Es lo primero que se busca al abrir una ficha. -->
+          <p v-if="fila.estancia" class="hs-dentro">
+            Ocupada desde {{ fechaCorta(fila.estancia.checkIn) }} ·
+            {{ fila.estancia.adultos }} adulto{{ fila.estancia.adultos === 1 ? '' : 's' }}
+            <template v-if="fila.estancia.ninos">+ {{ fila.estancia.ninos }} niño(s)</template>
+          </p>
+          <p v-else-if="fila.nota" class="hs-nota">{{ fila.nota }}</p>
+
+          <dl class="hs-datos">
+            <div>
+              <dt>Aforo</dt>
+              <dd>
+                {{ fila.tipo?.capacidad ?? '—'
+                }}<span v-if="fila.tipo"> · máx. {{ fila.tipo.capacidadMaxima }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Vista</dt>
+              <dd>{{ fila.vista || '—' }}</dd>
+            </div>
+            <div v-if="fila.comunicaCon?.length">
+              <dt>Comunica con</dt>
+              <dd>{{ fila.comunicaCon.map(nombreHabitacion).join(', ') }}</dd>
+            </div>
+          </dl>
+
+          <!-- Limpieza: se mira y se mueve desde aquí, que es donde se la busca. -->
+          <div class="hs-limpieza">
+            <KmBadge :tono="tonoLimpieza[fila.limpieza]">
+              {{ glifoLimpieza[fila.limpieza] }} {{ etiquetaLimpieza[fila.limpieza] }}
+            </KmBadge>
+            <span class="text-[11px] text-tenue">{{ desdeHace(fila.actualizada) }}</span>
+          </div>
+
+          <KmSelect
+            :model-value="fila.asignadaAId ?? ''"
+            :opciones="opcionesCamarera"
+            etiqueta="Camarera del turno"
+            class="w-full"
+            @update:model-value="asignar(fila, $event)"
+          />
+
+          <footer class="hs-acciones">
+            <button
+              v-if="fila.limpieza === 'sucia'"
+              type="button"
+              class="hs-enlace"
+              @click="cambiarLimpieza(fila, 'enLimpieza')"
+            >
+              Empezar limpieza
+            </button>
+            <button
+              v-else-if="fila.limpieza === 'enLimpieza'"
+              type="button"
+              class="hs-enlace"
+              @click="cambiarLimpieza(fila, 'inspeccion')"
+            >
+              Pasar a inspección
+            </button>
+            <button
+              v-else-if="fila.limpieza === 'inspeccion'"
+              type="button"
+              class="hs-enlace"
+              @click="cambiarLimpieza(fila, 'limpia')"
+            >
+              Dar por limpia
+            </button>
+            <span class="flex-1"></span>
+            <button type="button" class="hs-enlace" @click="editar">Editar</button>
+            <button v-if="eliminar" type="button" class="hs-enlace es-peligro" @click="eliminar">
+              Eliminar
+            </button>
+          </footer>
+        </article>
+      </template>
+
+      <!-- ── Formulario ───────────────────────────────────────────────── -->
+      <template #formulario="{ borrador, errores, editando }">
+        <div class="grid gap-4 sm:grid-cols-2">
+          <KmField
+            v-slot="{ id, invalido }"
+            label="Número"
+            :error="errores.numero"
+            ayuda="Único en la sede. Vale «201» o «PH-1»."
+            requerido
+          >
+            <KmInput :id="id" v-model="borrador.numero" placeholder="201" :invalido="invalido" />
+          </KmField>
+
+          <KmField v-slot="{ id, invalido }" label="Piso" :error="errores.pisoId" requerido>
+            <KmSelect
+              :id="id"
+              v-model="borrador.pisoId"
+              :opciones="opcionesPiso"
+              :invalido="invalido"
+              placeholder="Elige el piso"
+            />
+          </KmField>
+        </div>
+
+        <KmField
+          v-slot="{ id, invalido }"
+          label="Tipo de habitación"
+          :error="errores.tipoId"
+          ayuda="De aquí salen la tarifa base, el aforo y el régimen incluido."
+          requerido
+        >
+          <KmSelect
+            :id="id"
+            v-model="borrador.tipoId"
+            :opciones="opcionesTipo"
+            :invalido="invalido"
+            placeholder="Elige el tipo"
+          />
+        </KmField>
+
+        <KmField
+          v-slot="{ id }"
+          label="Vista"
+          ayuda="Atributo comercial: «mar», «interior», «terraza». Se usa para vender."
+        >
+          <KmInput :id="id" v-model="borrador.vista" placeholder="Vista al valle" />
+        </KmField>
+
+        <!--
+          Las comunicadas son lo que permite vender una familia junta. Sin esto,
+          la recepción lo sabe de memoria y se pierde cuando cambia la persona.
+        -->
+        <KmField
+          label="Comunica con"
+          ayuda="Habitaciones unidas por puerta interior. Se venden juntas a familias."
+        >
+          <div class="hs-comunicadas">
+            <KmCheckbox
+              v-for="otra in candidatasComunicadas(borrador.numero)"
+              :key="otra.id"
+              tamano="sm"
+              :model-value="(borrador.comunicaCon ?? []).includes(otra.id)"
+              @update:model-value="alternarComunicada(borrador, otra.id)"
+            >
+              {{ otra.numero }}
+            </KmCheckbox>
+            <p v-if="!candidatasComunicadas(borrador.numero).length" class="text-xs text-tenue">
+              No hay otras habitaciones en esta sede todavía.
+            </p>
+          </div>
+        </KmField>
+
+        <KmField
+          v-slot="{ id }"
+          label="Nota"
+          ayuda="Motivo del bloqueo o cualquier cosa que recepción deba saber."
+        >
+          <KmInput :id="id" v-model="borrador.nota" placeholder="Aire acondicionado averiado" />
+        </KmField>
+
+        <!--
+          La posición es la del plano del piso, en porcentaje. Se teclea aquí
+          para que una habitación nueva aparezca en su sitio desde el primer día.
+        -->
+        <div class="grid gap-4 sm:grid-cols-2">
+          <KmField
+            v-slot="{ id }"
+            label="Posición en el plano · X"
+            ayuda="0 a la izquierda, 100 a la derecha."
+          >
+            <KmNumero :id="id" v-model="borrador.posX" :min="0" :max="100" sufijo="%" />
+          </KmField>
+          <KmField v-slot="{ id }" label="Posición en el plano · Y" ayuda="0 arriba, 100 abajo.">
+            <KmNumero :id="id" v-model="borrador.posY" :min="0" :max="100" sufijo="%" />
+          </KmField>
+        </div>
+
+        <p v-if="!editando" class="text-xs text-tenue">
+          La habitación nace libre y limpia. Los dos estados los mueve después la operación:
+          recepción la ocupa, housekeeping la limpia.
+        </p>
+      </template>
+    </KmCatalogo>
+  </div>
 </template>
+
+<style scoped>
+/* Las cifras del inventario, en la misma línea de lectura que el tablero. */
+.hs-cifra {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--hs-border);
+  border-radius: var(--hs-radio-card, 12px);
+  background-color: var(--hs-surface);
+}
+
+.hs-cifra-valor {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--hs-text);
+}
+
+.hs-cifra.es-alerta .hs-cifra-valor {
+  color: var(--hs-coral);
+}
+.hs-cifra.es-aviso .hs-cifra-valor {
+  color: var(--hs-turquesa-texto);
+}
+
+.hs-cifra-nombre {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hs-muted);
+}
+
+/* La tarjeta de la habitación. */
+.hs-habitacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--hs-border);
+  border-radius: var(--hs-radio-card, 12px);
+  background-color: var(--hs-surface);
+  transition: border-color var(--km-mov-normal) var(--km-curva);
+}
+
+.hs-habitacion:hover {
+  border-color: var(--hs-azul-400);
+}
+
+/* Fuera de servicio se marca en el filo: es la que no se puede vender. */
+.hs-habitacion.esta-fuera {
+  border-left: 4px solid var(--hs-coral);
+}
+
+.hs-dentro,
+.hs-nota {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--hs-radio-control, 8px);
+  font-size: 0.78rem;
+}
+
+.hs-dentro {
+  background-color: color-mix(in srgb, var(--hs-coral) 10%, var(--hs-surface));
+  color: var(--hs-text);
+}
+
+.hs-nota {
+  background-color: var(--hs-surface-2);
+  color: var(--hs-muted);
+}
+
+.hs-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.hs-datos dt {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hs-muted);
+}
+
+.hs-datos dd {
+  margin: 0;
+  color: var(--hs-text);
+}
+
+.hs-limpieza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.hs-acciones {
+  /* Abajo del todo: en una rejilla, las acciones de todas las tarjetas quedan
+     en la misma línea de mira aunque unas tengan huésped dentro y otras no. */
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--hs-border);
+}
+
+.hs-enlace {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--hs-muted);
+  cursor: pointer;
+  transition: color var(--km-mov-rapido) var(--km-curva);
+}
+
+.hs-enlace:hover {
+  color: var(--hs-text);
+}
+.hs-enlace.es-peligro:hover {
+  color: var(--hs-coral);
+}
+
+.hs-comunicadas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--hs-border);
+  border-radius: var(--hs-radio-control, 8px);
+  background-color: var(--hs-surface-2);
+  max-height: 9rem;
+  overflow-y: auto;
+}
+</style>

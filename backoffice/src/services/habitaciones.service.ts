@@ -52,9 +52,36 @@ function validar(datos: Partial<NuevaHabitacion>, id?: string) {
 export const habitacionesService = {
   ...repo,
 
+  /**
+   * Consulta de catálogo, resuelta y con sede.
+   *
+   * Dos diferencias con la del repositorio, y las dos importan. La primera es
+   * que devuelve la habitación **resuelta**: sin su tipo y su piso, un listado
+   * de habitaciones es una columna de números que no dice nada. La segunda es
+   * que entiende el filtro `localId`, que la habitación no lleva encima: una
+   * habitación pertenece a una sede **a través de su piso**, y esa regla vive
+   * aquí y no en la pantalla.
+   */
+  async consultar(consulta?: Consulta): Promise<Paginado<HabitacionResuelta>> {
+    const { localId, ...filtros } = consulta?.filtros ?? {}
+    const base = { ...consulta, filtros }
+
+    if (!localId) {
+      const { items, ...resto } = await repo.consultar(base)
+      return { ...resto, items: items.map(resolver) }
+    }
+
+    const dePiso = new Set(db.pisos.filter((p) => p.localId === localId).map((p) => p.id))
+    const { items, ...resto } = aplicarConsulta(
+      db.habitaciones.filter((h) => dePiso.has(h.pisoId)),
+      base,
+      ['numero', 'vista', 'nota'],
+    )
+    return latencia({ ...resto, items: items.map(resolver) })
+  },
+
   async consultarResueltas(consulta?: Consulta): Promise<Paginado<HabitacionResuelta>> {
-    const { items, ...resto } = await repo.consultar(consulta)
-    return { ...resto, items: items.map(resolver) }
+    return this.consultar(consulta)
   },
 
   /** Todas las habitaciones de una sede, resueltas y ordenadas por número. */
@@ -77,18 +104,58 @@ export const habitacionesService = {
     return latencia(pisos)
   },
 
-  async crear(datos: NuevaHabitacion): Promise<Habitacion> {
+  /*
+   * El alta y la edición devuelven la habitación **resuelta**, con su tipo y
+   * su piso dentro. Quien acaba de guardar necesita enseñarla, y devolver solo
+   * los ids le obligaría a pedir la lista otra vez para pintar una fila.
+   */
+  async crear(datos: NuevaHabitacion): Promise<HabitacionResuelta> {
     validar(datos)
-    return repo.crear({
-      ...datos,
-      numero: datos.numero.trim(),
-      actualizada: new Date().toISOString(),
-    })
+    return resolver(
+      await repo.crear({
+        ...datos,
+        numero: datos.numero.trim(),
+        actualizada: new Date().toISOString(),
+      }),
+    )
   },
 
-  async actualizar(id: string, datos: Partial<NuevaHabitacion>): Promise<Habitacion> {
+  async actualizar(id: string, datos: Partial<NuevaHabitacion>): Promise<HabitacionResuelta> {
     validar(datos, id)
-    return repo.actualizar(id, { ...datos, actualizada: new Date().toISOString() })
+    return resolver(await repo.actualizar(id, { ...datos, actualizada: new Date().toISOString() }))
+  },
+
+  /**
+   * Una habitación con historia no se borra.
+   *
+   * Si alguien durmió ahí, el número aparece en su factura, en el Registro de
+   * Huéspedes y en la producción del mes. Borrarla dejaría esos documentos
+   * apuntando al vacío. Para sacarla del inventario está `bloqueada`, que es
+   * reversible y deja rastro del motivo.
+   */
+  async eliminar(id: string): Promise<void> {
+    const habitacion = db.habitaciones.find((h) => h.id === id)
+    if (!habitacion) throw { mensaje: 'Habitación no encontrada.' }
+
+    if (db.estancias.some((e) => e.habitacionId === id)) {
+      throw {
+        mensaje: `La habitación ${habitacion.numero} tiene estancias en el histórico. Bloquéala en vez de borrarla.`,
+      }
+    }
+    if (db.reservas.some((r) => r.habitacionId === id)) {
+      throw {
+        mensaje: `La habitación ${habitacion.numero} está asignada a una reserva. Reasígnala antes de borrarla.`,
+      }
+    }
+
+    // Las comunicadas dejan de apuntar a una habitación que ya no existe.
+    for (const otra of db.habitaciones) {
+      if (otra.comunicaCon?.includes(id)) {
+        otra.comunicaCon = otra.comunicaCon.filter((x) => x !== id)
+      }
+    }
+
+    return repo.eliminar(id)
   },
 
   /**
