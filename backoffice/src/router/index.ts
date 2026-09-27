@@ -69,17 +69,13 @@ const rutas: RouteRecordRaw[] = [
 
       // ── Reservas ────────────────────────────────────────────────────────
       {
-        path: 'reservas/planning',
-        name: 'planning',
-        component: () => import('@/views/reservas/PlanningView.vue'),
-        meta: { titulo: 'Planning' },
-      },
-      {
         path: 'reservas',
         name: 'reservas',
         component: () => import('@/views/reservas/ReservasView.vue'),
         meta: { titulo: 'Reservas' },
       },
+      // El planning dejó de ser una pantalla aparte: es una lente de Reservas.
+      { path: 'reservas/planning', redirect: { name: 'reservas' } },
       {
         path: 'recepcion',
         name: 'recepcion',
