@@ -20,11 +20,18 @@ const repo = crearRepositorio('habitaciones', {
 })
 
 function resolver(h: Habitacion): HabitacionResuelta {
+  /*
+   * La camarera se deriva de la tarea abierta de hoy, no se guarda en la
+   * habitación. Así solo hay una verdad sobre quién limpia el 203, y cambia
+   * donde se reparte el trabajo: en Housekeeping.
+   */
+  const tarea = db.tareas.find((t) => t.habitacionId === h.id && t.estado !== 'terminada')
   return {
     ...h,
     tipo: db.tiposHabitacion.find((t) => t.id === h.tipoId),
     piso: db.pisos.find((p) => p.id === h.pisoId),
     estancia: h.estanciaId ? db.estancias.find((e) => e.id === h.estanciaId) : undefined,
+    camarera: tarea?.asignadaAId ? db.usuarios.find((u) => u.id === tarea.asignadaAId) : undefined,
   }
 }
 
@@ -51,6 +58,11 @@ function validar(datos: Partial<NuevaHabitacion>, id?: string) {
  */
 export const habitacionesService = {
   ...repo,
+
+  /** Una habitación suelta, resuelta igual que en el listado. */
+  async obtener(id: string): Promise<HabitacionResuelta> {
+    return resolver(await repo.obtener(id))
+  },
 
   /**
    * Consulta de catálogo, resuelta y con sede.
@@ -195,11 +207,6 @@ export const habitacionesService = {
       persistir()
     }
     return repo.actualizar(id, { limpieza, actualizada: new Date().toISOString() })
-  },
-
-  /** Asigna la camarera del turno a la habitación. */
-  async asignarCamarera(id: string, usuarioId?: string) {
-    return repo.actualizar(id, { asignadaAId: usuarioId, actualizada: new Date().toISOString() })
   },
 
   /**

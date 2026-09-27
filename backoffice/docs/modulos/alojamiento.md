@@ -10,13 +10,13 @@ El registro de lo que el hotel **tiene**. El tablero contesta «¿qué pasa ahor
 
 No son las de la jornada: son las que se miran al planificar.
 
-| Cifra               | Qué dice                                                     |
-| ------------------- | ------------------------------------------------------------ |
-| Habitaciones        | Cuántas existen en la sede                                   |
-| Vendibles hoy       | Las que no están bloqueadas                                  |
-| Ocupación           | Ocupadas sobre vendibles                                     |
-| Fuera de servicio   | La que más duele: cada una es una habitación que no se vende |
-| Sucias sin camarera | El hueco que deja una planta sin terminar                    |
+| Cifra                 | Qué dice                                                              |
+| --------------------- | --------------------------------------------------------------------- |
+| Habitaciones          | Cuántas existen en la sede                                            |
+| Vendibles hoy         | Las que no están bloqueadas                                           |
+| Ocupación             | Ocupadas sobre vendibles                                              |
+| Fuera de servicio     | La que más duele: cada una es una habitación que no se vende          |
+| Sin sitio en el plano | Existe en el listado pero no aparece en la planta: nadie la encuentra |
 
 ### Alta, edición y baja
 
@@ -34,11 +34,24 @@ Si alguien durmió ahí, el número aparece en su factura, en el Registro de Hu�
 Para sacarla del inventario está **bloqueada**, que es reversible y deja constancia del porqué. Al borrar una que sí se puede, deja además de figurar en las comunicadas de las demás.
 :::
 
-### Lo que se hace a diario desde aquí
+### Qué se ve y qué no se toca
 
-- **Reasignar la camarera** del turno con el desplegable de la tarjeta.
-- **Avanzar la limpieza** con el enlace que cambia según el estado: «Empezar limpieza» si está sucia, «Pasar a inspección», «Dar por limpia».
-- Ver **quién está dentro** y desde cuándo, sin abrir nada.
+El maestro dice lo que la habitación **es**. Lo que está **haciendo** —sucia, en
+limpieza, quién la limpia hoy, quién duerme dentro— se lee aquí de un vistazo,
+pero se mueve donde está el trabajo:
+
+| Se lee aquí                      | Se cambia en |
+| -------------------------------- | ------------ |
+| Estado de limpieza               | Housekeeping |
+| Camarera del turno               | Housekeeping |
+| Quién está dentro y desde cuándo | Recepción    |
+
+Hubo un tiempo en que esta pantalla también avanzaba la limpieza y repartía el
+turno. Salieron dos rótulos para el mismo paso —«Empezar limpieza» aquí,
+«Empezar» allí— y, peor, dos verdades sobre quién limpia el 203: el responsable
+estaba guardado en la habitación **y** en la tarea, y asignarlo desde el maestro
+dejaba la tarea apuntando a otra persona. Ahora vive solo en la tarea; la ficha
+de la habitación lo deriva de la tarea abierta y ofrece un enlace a Housekeeping.
 
 ### Por qué no tiene activo/inactivo
 

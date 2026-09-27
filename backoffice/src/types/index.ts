@@ -149,8 +149,15 @@ export interface Habitacion {
   limpieza: EstadoLimpieza
   /** Estancia en curso, si la habitación está ocupada. */
   estanciaId?: string
-  /** Camarera asignada al turno de hoy. */
-  asignadaAId?: string
+  /*
+   * Aquí NO va la camarera del turno.
+   *
+   * La habitación no tiene camarera: la tiene el **trabajo** de limpiarla hoy,
+   * que es la `TareaLimpieza`. Tener el dato en los dos sitios daba dos
+   * verdades sobre quién limpia el 203, y la que se editaba desde el maestro
+   * dejaba la tarea apuntando a otra persona. Para leerla está
+   * `HabitacionResuelta.camarera`, que se deriva de la tarea abierta.
+   */
   /** Vista o característica comercial: «mar», «interior», «terraza». */
   vista?: string
   /** Habitaciones comunicadas, para vender familias juntas. */
@@ -172,6 +179,11 @@ export interface HabitacionResuelta extends Habitacion {
   piso?: Piso
   /** Estancia en curso ya resuelta, cuando la hay. */
   estancia?: Estancia
+  /**
+   * Quién la limpia hoy. Derivado de la tarea abierta, nunca guardado en la
+   * habitación: el responsable es del trabajo, no del inmueble.
+   */
+  camarera?: Usuario
 }
 
 /** Piso con sus habitaciones resueltas, para la vista de plano. */

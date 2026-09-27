@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { habitacionesService } from './habitaciones.service'
+import { limpiezaService } from './limpieza.service'
 import { db, reiniciarMock } from './mock/db'
 
 /**
@@ -101,5 +102,19 @@ describe('eliminar', () => {
 
     expect(db.habitaciones.some((h) => h.id === creada.id)).toBe(false)
     expect(db.habitaciones.find((h) => h.id === vecina.id)?.comunicaCon).not.toContain(creada.id)
+  })
+
+  /*
+   * Quién limpia la habitación es del trabajo, no del inmueble. El maestro lo
+   * enseña, pero lo lee de la tarea abierta: si el turno se reparte de otra
+   * manera en Housekeeping, la ficha de la habitación cuenta lo mismo.
+   */
+  it('deriva la camarera de la tarea abierta, no de la habitación', async () => {
+    const tarea = db.tareas.find((t) => t.estado !== 'terminada')!
+    await limpiezaService.asignar(tarea.id, 'u6')
+
+    const habitacion = await habitacionesService.obtener(tarea.habitacionId)
+
+    expect(habitacion.camarera?.id).toBe('u6')
   })
 })

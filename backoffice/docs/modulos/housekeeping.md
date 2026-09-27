@@ -2,6 +2,12 @@
 
 El tablero de pisos: una columna por fase del trabajo. Es el mismo patrón que la cola de una cocina, porque el oficio es el mismo — trabajo pendiente con el reloj encima.
 
+## Quién limpia cada habitación se decide aquí, y solo aquí
+
+El responsable es del **trabajo**, no del inmueble: vive en la tarea del turno,
+no en la ficha de la habitación. Alojamiento lo enseña —lo deriva de la tarea
+abierta— pero no lo cambia, para que no haya dos respuestas a la misma pregunta.
+
 ## La carga del turno
 
 Arriba, una barra por camarera con sus tareas y sus **minutos estimados**. Sirve para repartir antes de que se acumule, no para descubrir a las dos de la tarde que una persona tiene el triple que las demás.

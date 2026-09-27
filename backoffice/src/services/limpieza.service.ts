@@ -87,13 +87,14 @@ export const limpiezaService = {
     })
   },
 
+  /**
+   * Reparte el trabajo del turno.
+   *
+   * El responsable vive **solo** en la tarea. Antes esto escribía también en la
+   * habitación, para mantener las dos copias de acuerdo; ahora no hay segunda
+   * copia que mantener.
+   */
   async asignar(id: string, usuarioId?: string): Promise<TareaLimpieza> {
-    const tarea = db.tareas.find((t) => t.id === id)
-    if (tarea) {
-      const habitacion = db.habitaciones.find((h) => h.id === tarea.habitacionId)
-      if (habitacion) habitacion.asignadaAId = usuarioId
-      persistir()
-    }
     return repo.actualizar(id, { asignadaAId: usuarioId })
   },
 

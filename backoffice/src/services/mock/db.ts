@@ -140,13 +140,13 @@ function semilla(): Esquema {
   /** Estado vivo: lo que se ve al abrir el tablero un día cualquiera a media mañana. */
   const estadoInicial: Record<
     string,
-    Partial<Pick<Habitacion, 'ocupacion' | 'limpieza' | 'estanciaId' | 'nota' | 'asignadaAId'>>
+    Partial<Pick<Habitacion, 'ocupacion' | 'limpieza' | 'estanciaId' | 'nota'>>
   > = {
     h101: { ocupacion: 'ocupada', limpieza: 'sucia', estanciaId: 'e1' },
-    h102: { ocupacion: 'libre', limpieza: 'sucia', asignadaAId: 'u4' },
+    h102: { ocupacion: 'libre', limpieza: 'sucia' },
     h103: { ocupacion: 'ocupada', limpieza: 'limpia', estanciaId: 'e2' },
     h104: { ocupacion: 'reservada', limpieza: 'limpia' },
-    h105: { ocupacion: 'libre', limpieza: 'enLimpieza', asignadaAId: 'u4' },
+    h105: { ocupacion: 'libre', limpieza: 'enLimpieza' },
     h106: { ocupacion: 'ocupada', limpieza: 'sucia', estanciaId: 'e3' },
     h108: {
       ocupacion: 'bloqueada',
@@ -154,14 +154,14 @@ function semilla(): Esquema {
       nota: 'Fuga en el baño · parte de mantenimiento abierto',
     },
     h201: { ocupacion: 'ocupada', limpieza: 'limpia', estanciaId: 'e4' },
-    h202: { ocupacion: 'libre', limpieza: 'inspeccion', asignadaAId: 'u5' },
+    h202: { ocupacion: 'libre', limpieza: 'inspeccion' },
     h203: { ocupacion: 'reservada', limpieza: 'limpia' },
     h204: { ocupacion: 'ocupada', limpieza: 'sucia', estanciaId: 'e5' },
-    h206: { ocupacion: 'libre', limpieza: 'sucia', asignadaAId: 'u5' },
+    h206: { ocupacion: 'libre', limpieza: 'sucia' },
     h207: { ocupacion: 'ocupada', limpieza: 'limpia', estanciaId: 'e6' },
     h301: { ocupacion: 'ocupada', limpieza: 'limpia', estanciaId: 'e7' },
     h302: { ocupacion: 'reservada', limpieza: 'limpia' },
-    h303: { ocupacion: 'libre', limpieza: 'enLimpieza', asignadaAId: 'u4' },
+    h303: { ocupacion: 'libre', limpieza: 'enLimpieza' },
   }
 
   for (const h of habitaciones) {

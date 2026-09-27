@@ -12,10 +12,9 @@ import KmSelect from '@/components/ui/KmSelect.vue'
 import { habitacionesService } from '@/services/habitaciones.service'
 import { pisosService } from '@/services/pisos.service'
 import { tiposService } from '@/services/tipos.service'
-import { usuariosService } from '@/services/usuarios.service'
 import { useLocalStore } from '@/stores/local.store'
 import { useUiStore } from '@/stores/ui.store'
-import type { EstadoLimpieza, HabitacionResuelta, Piso, TipoHabitacion, Usuario } from '@/types'
+import type { HabitacionResuelta, Piso, TipoHabitacion } from '@/types'
 import type { ColumnaTabla, OpcionSelect } from '@/types/ui'
 import { desdeHace, fechaCorta } from '@/utils/formato'
 import {
@@ -46,7 +45,6 @@ const ui = useUiStore()
 
 const pisos = ref<Piso[]>([])
 const tipos = ref<TipoHabitacion[]>([])
-const camareras = ref<Usuario[]>([])
 const resumen = ref<Awaited<ReturnType<typeof habitacionesService.resumen>> | null>(null)
 const hermanas = ref<HabitacionResuelta[]>([])
 
@@ -95,16 +93,14 @@ async function cargarApoyo() {
   const localId = localStore.localId
   if (!localId) return
   try {
-    const [listaPisos, listaTipos, listaCamareras, cifras, listaHermanas] = await Promise.all([
+    const [listaPisos, listaTipos, cifras, listaHermanas] = await Promise.all([
       pisosService.consultar({ filtros: { localId }, porPagina: 200 }),
       tiposService.consultar({ porPagina: 200 }),
-      usuariosService.personalDePisos(),
       habitacionesService.resumen(localId),
       habitacionesService.listarPorLocal(localId),
     ])
     pisos.value = listaPisos.items.filter((p) => p.activo)
     tipos.value = listaTipos.items.filter((t) => t.activo)
-    camareras.value = listaCamareras
     resumen.value = cifras
     hermanas.value = listaHermanas
   } catch {
@@ -137,33 +133,16 @@ function alternarComunicada(borrador: Omit<HabitacionResuelta, 'id'>, id: string
 
 const nombreHabitacion = (id: string) => hermanas.value.find((h) => h.id === id)?.numero ?? '—'
 
-/** Las camareras se asignan desde aquí porque el turno se reparte en lista. */
-async function asignar(h: HabitacionResuelta, usuarioId: string | number | undefined) {
-  try {
-    await habitacionesService.asignarCamarera(h.id, (usuarioId as string) || undefined)
-    ui.exito(`Habitación ${h.numero} reasignada.`)
-    await cargarApoyo()
-  } catch {
-    ui.error('No se pudo asignar la camarera.')
-  }
-}
+/*
+ * Aquí no se limpia ni se reparte el turno.
+ *
+ * Este es el maestro: dice lo que la habitación ES —número, planta, tipo,
+ * vista, comunicadas, dónde cae en el plano—. Lo que la habitación ESTÁ
+ * HACIENDO —sucia, en limpieza, quién la limpia hoy— se ve aquí de un vistazo,
+ * pero se mueve en Housekeeping, que es donde está el trabajo. Tener los dos
+ * botones daba dos rótulos para el mismo paso y dos sitios donde mirar.
+ */
 
-async function cambiarLimpieza(h: HabitacionResuelta, estado: EstadoLimpieza) {
-  try {
-    await habitacionesService.cambiarLimpieza(h.id, estado)
-    ui.exito(`Habitación ${h.numero}: ${etiquetaLimpieza[estado].toLowerCase()}.`)
-    await cargarApoyo()
-  } catch (e) {
-    ui.error((e as { mensaje?: string }).mensaje ?? 'No se pudo cambiar el estado.')
-  }
-}
-
-const opcionesCamarera = computed<OpcionSelect[]>(() => [
-  { valor: '', etiqueta: 'Sin asignar' },
-  ...camareras.value.map((u) => ({ valor: u.id, etiqueta: u.nombre })),
-])
-
-/** Habitaciones sin camarera del turno: el hueco que deja sucia una planta. */
 /**
  * El modo «colocar en el plano».
  *
@@ -214,8 +193,13 @@ function guardarPosicion(h: HabitacionResuelta) {
   }, 350)
 }
 
-const sinAsignar = computed(
-  () => hermanas.value.filter((h) => h.limpieza === 'sucia' && !h.asignadaAId).length,
+/**
+ * Sin sitio en el plano: la cifra que sí es del maestro. Una habitación sin
+ * colocar existe en el listado pero no aparece en la planta, así que nadie la
+ * encuentra al repartir el turno ni al enseñarla.
+ */
+const sinColocar = computed(
+  () => hermanas.value.filter((h) => h.posX === undefined || h.posY === undefined).length,
 )
 </script>
 
@@ -243,9 +227,9 @@ const sinAsignar = computed(
         <span class="hs-display hs-cifra-valor">{{ resumen.porLimpieza.fueraServicio ?? 0 }}</span>
         <span class="hs-cifra-nombre">Fuera de servicio</span>
       </div>
-      <div class="hs-cifra" :class="{ 'es-aviso': sinAsignar > 0 }">
-        <span class="hs-display hs-cifra-valor">{{ sinAsignar }}</span>
-        <span class="hs-cifra-nombre">Sucias sin camarera</span>
+      <div class="hs-cifra" :class="{ 'es-aviso': sinColocar > 0 }">
+        <span class="hs-display hs-cifra-valor">{{ sinColocar }}</span>
+        <span class="hs-cifra-nombre">Sin sitio en el plano</span>
       </div>
     </div>
 
@@ -398,47 +382,21 @@ const sinAsignar = computed(
             </div>
           </dl>
 
-          <!-- Limpieza: se mira y se mueve desde aquí, que es donde se la busca. -->
+          <!-- Cómo está hoy: se lee, no se toca. Se cambia en Housekeeping. -->
           <div class="hs-limpieza">
             <KmBadge :tono="tonoLimpieza[fila.limpieza]">
               {{ glifoLimpieza[fila.limpieza] }} {{ etiquetaLimpieza[fila.limpieza] }}
             </KmBadge>
+            <span v-if="fila.camarera" class="text-[11px] text-tenue">
+              · {{ fila.camarera.nombre }}
+            </span>
             <span class="text-[11px] text-tenue">{{ desdeHace(fila.actualizada) }}</span>
           </div>
 
-          <KmSelect
-            :model-value="fila.asignadaAId ?? ''"
-            :opciones="opcionesCamarera"
-            etiqueta="Camarera del turno"
-            class="w-full"
-            @update:model-value="asignar(fila, $event)"
-          />
-
           <footer class="hs-acciones">
-            <button
-              v-if="fila.limpieza === 'sucia'"
-              type="button"
-              class="hs-enlace"
-              @click="cambiarLimpieza(fila, 'enLimpieza')"
-            >
-              Empezar limpieza
-            </button>
-            <button
-              v-else-if="fila.limpieza === 'enLimpieza'"
-              type="button"
-              class="hs-enlace"
-              @click="cambiarLimpieza(fila, 'inspeccion')"
-            >
-              Pasar a inspección
-            </button>
-            <button
-              v-else-if="fila.limpieza === 'inspeccion'"
-              type="button"
-              class="hs-enlace"
-              @click="cambiarLimpieza(fila, 'limpia')"
-            >
-              Dar por limpia
-            </button>
+            <RouterLink class="hs-enlace" :to="{ name: 'limpieza' }">
+              Ver en Housekeeping
+            </RouterLink>
             <span class="flex-1"></span>
             <button type="button" class="hs-enlace" @click="editar">Editar</button>
             <button v-if="eliminar" type="button" class="hs-enlace es-peligro" @click="eliminar">
