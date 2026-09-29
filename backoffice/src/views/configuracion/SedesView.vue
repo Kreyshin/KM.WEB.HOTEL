@@ -162,6 +162,7 @@ const opDistritos = computed<OpcionSelect[]>(() =>
             v-model="seleccion.departamentoId"
             :opciones="opDepartamentos"
             placeholder="Elige un departamento"
+            vacio="El padrón de ubigeos no cargó. Reinicia los datos de ejemplo."
           />
         </KmField>
         <KmField

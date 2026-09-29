@@ -21,6 +21,8 @@ const props = withDefaults(
     placeholder?: string
     /** Nombre accesible cuando el select no tiene label visible. */
     etiqueta?: string
+    /** Qué decir cuando la lista viene vacía, que no es lo mismo que no encontrar. */
+    vacio?: string
     invalido?: boolean
     disabled?: boolean
   }>(),
@@ -268,7 +270,16 @@ onBeforeUnmount(() => cerrar(false))
               <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5 9-10" />
             </svg>
           </li>
-          <li v-if="!filtradas.length" class="px-2.5 py-2 text-sm text-tenue">
+          <!--
+            Lista vacía y búsqueda sin coincidencias no son lo mismo, y
+            confundirlas manda a buscar un dato que nunca estuvo: «sin
+            resultados para lima» cuando el catálogo no había cargado hizo
+            perder un buen rato. Cada caso dice lo suyo.
+          -->
+          <li v-if="!opciones.length" class="px-2.5 py-2 text-sm text-tenue">
+            {{ vacio ?? 'No hay nada que elegir aquí todavía.' }}
+          </li>
+          <li v-else-if="!filtradas.length" class="px-2.5 py-2 text-sm text-tenue">
             Sin resultados para «{{ texto }}»
           </li>
         </ul>
