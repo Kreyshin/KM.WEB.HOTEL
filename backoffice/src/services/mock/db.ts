@@ -1265,14 +1265,41 @@ function semilla(): Esquema {
   }
 }
 
+/**
+ * Catálogos del núcleo: de solo lectura y siempre de la semilla.
+ *
+ * Nadie da de alta un distrito desde el backoffice, así que guardarlos en el
+ * navegador solo consigue que una sesión abierta ayer se quede con el padrón
+ * de ayer. Se rehacen en cada arranque y así crecen sin romper a nadie.
+ */
+const CATALOGOS_NUCLEO = ['departamentos', 'provincias', 'distritos'] as const
+
+/**
+ * Carga lo guardado **completándolo** con la semilla.
+ *
+ * Antes se devolvía el snapshot tal cual, y eso convertía cada colección nueva
+ * en una pantalla vacía para quien ya tuviera datos: el navegador seguía
+ * sirviendo una foto anterior a que esa tabla existiera. Ahora se parte de la
+ * semilla y solo se pisan las colecciones que el snapshot trae, salvo los
+ * catálogos del núcleo, que mandan siempre.
+ */
 function cargar(): Esquema {
+  const inicial = semilla()
   try {
     const crudo = localStorage.getItem(CLAVE)
-    if (crudo) return JSON.parse(crudo) as Esquema
+    if (crudo) {
+      const guardado = JSON.parse(crudo) as Partial<Esquema>
+      const datos = inicial as unknown as Record<string, unknown>
+      for (const clave of Object.keys(inicial) as (keyof Esquema)[]) {
+        if ((CATALOGOS_NUCLEO as readonly string[]).includes(clave)) continue
+        const valor = guardado[clave]
+        if (valor !== undefined) datos[clave] = valor
+      }
+      return inicial
+    }
   } catch {
-    // localStorage bloqueado o dato corrupto: se reinicia con la semilla.
+    // localStorage bloqueado o dato corrupto: se arranca con la semilla.
   }
-  const inicial = semilla()
   guardar(inicial)
   return inicial
 }
