@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import HsCifra from '@/components/hotel/HsCifra.vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import PlanoPiso from '@/components/alojamiento/PlanoPiso.vue'
 import HsIcono from '@/components/hotel/HsIcono.vue'
@@ -211,26 +212,19 @@ const sinColocar = computed(
       es la que más duele, porque cada una es una habitación que no se vende.
     -->
     <div v-if="resumen" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      <div class="hs-cifra">
-        <span class="hs-display hs-cifra-valor">{{ resumen.total }}</span>
-        <span class="hs-cifra-nombre">Habitaciones</span>
-      </div>
-      <div class="hs-cifra">
-        <span class="hs-display hs-cifra-valor">{{ resumen.vendibles }}</span>
-        <span class="hs-cifra-nombre">Vendibles hoy</span>
-      </div>
-      <div class="hs-cifra">
-        <span class="hs-display hs-cifra-valor">{{ resumen.ocupacion }}%</span>
-        <span class="hs-cifra-nombre">Ocupación</span>
-      </div>
-      <div class="hs-cifra" :class="{ 'es-alerta': (resumen.porLimpieza.fueraServicio ?? 0) > 0 }">
-        <span class="hs-display hs-cifra-valor">{{ resumen.porLimpieza.fueraServicio ?? 0 }}</span>
-        <span class="hs-cifra-nombre">Fuera de servicio</span>
-      </div>
-      <div class="hs-cifra" :class="{ 'es-aviso': sinColocar > 0 }">
-        <span class="hs-display hs-cifra-valor">{{ sinColocar }}</span>
-        <span class="hs-cifra-nombre">Sin sitio en el plano</span>
-      </div>
+      <HsCifra :valor="resumen.total" nombre="Habitaciones" />
+      <HsCifra :valor="resumen.vendibles" nombre="Vendibles hoy" />
+      <HsCifra :valor="`${resumen.ocupacion}%`" nombre="Ocupación" />
+      <HsCifra
+        :valor="resumen.porLimpieza.fueraServicio ?? 0"
+        nombre="Fuera de servicio"
+        :tono="(resumen.porLimpieza.fueraServicio ?? 0) > 0 ? 'alerta' : 'neutro'"
+      />
+      <HsCifra
+        :valor="sinColocar"
+        nombre="Sin sitio en el plano"
+        :tono="sinColocar > 0 ? 'aviso' : 'neutro'"
+      />
     </div>
 
     <!-- Dos oficios: el registro de lo que existe y dónde está cada cosa. -->
@@ -513,40 +507,6 @@ const sinColocar = computed(
 </template>
 
 <style scoped>
-/* Las cifras del inventario, en la misma línea de lectura que el tablero. */
-.hs-cifra {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.875rem 1rem;
-  border: 1px solid var(--hs-border);
-  border-radius: var(--hs-radio-card, 12px);
-  background-color: var(--hs-surface);
-}
-
-.hs-cifra-valor {
-  font-size: 1.5rem;
-  font-weight: 600;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-  color: var(--hs-text);
-}
-
-.hs-cifra.es-alerta .hs-cifra-valor {
-  color: var(--hs-coral);
-}
-.hs-cifra.es-aviso .hs-cifra-valor {
-  color: var(--hs-turquesa-texto);
-}
-
-.hs-cifra-nombre {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--hs-muted);
-}
-
 /* La tarjeta de la habitación. */
 .hs-habitacion {
   display: flex;
