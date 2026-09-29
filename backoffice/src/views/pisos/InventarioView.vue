@@ -5,7 +5,6 @@ import KmField from '@/components/ui/KmField.vue'
 import KmInput from '@/components/ui/KmInput.vue'
 import KmNumero from '@/components/ui/KmNumero.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
-import KmSwitch from '@/components/ui/KmSwitch.vue'
 import { inventarioService } from '@/services/inventario.service'
 import type { CategoriaInsumo, Insumo, UnidadMedida } from '@/types'
 import type { ColumnaTabla, OpcionSelect } from '@/types/ui'
@@ -120,7 +119,11 @@ function validar(i: Omit<Insumo, 'id'>): Record<string, string> {
         </KmField>
       </div>
 
-      <KmSwitch v-model="borrador.activo" etiqueta="Insumo activo" />
+      <!--
+        El estado no se pregunta en el alta: un insumo nace en uso. Darlo de baja
+        es una decisión posterior, y KmCatalogo pone ese campo —con su aviso de
+        consecuencias— solo al editar.
+      -->
     </template>
   </KmCatalogo>
 </template>

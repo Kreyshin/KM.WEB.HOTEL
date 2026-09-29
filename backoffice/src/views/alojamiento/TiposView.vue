@@ -7,7 +7,6 @@ import KmField from '@/components/ui/KmField.vue'
 import KmInput from '@/components/ui/KmInput.vue'
 import KmNumero from '@/components/ui/KmNumero.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
-import KmSwitch from '@/components/ui/KmSwitch.vue'
 import { tiposService } from '@/services/tipos.service'
 import type { NuevoTipoHabitacion, Regimen, TipoHabitacion } from '@/types'
 import type { ColumnaTabla, OpcionSelect } from '@/types/ui'
@@ -228,11 +227,11 @@ function validar(t: NuevoTipoHabitacion): Record<string, string> {
         </KmField>
       </div>
 
-      <KmSwitch
-        v-model="borrador.activo"
-        etiqueta="Tipo activo"
-        descripcion="Un tipo inactivo deja de publicarse, pero conserva su histórico."
-      />
+      <!--
+        El estado no se pregunta en el alta: un tipo nace publicándose. Darlo de baja
+        es una decisión posterior, y KmCatalogo pone ese campo —con su aviso de
+        consecuencias— solo al editar.
+      -->
     </template>
   </KmCatalogo>
 </template>

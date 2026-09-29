@@ -172,6 +172,7 @@ function abrirNuevo() {
   borrador.value = { ...props.nuevo(), ...props.filtrosFijos } as Omit<T, 'id'>
   errores.value = {}
   drawerAbierto.value = true
+  emit('abrirFormulario', undefined)
 }
 
 function abrirEdicion(fila: T) {
@@ -183,6 +184,7 @@ function abrirEdicion(fila: T) {
   estadoConfirmado = false
   errores.value = {}
   drawerAbierto.value = true
+  emit('abrirFormulario', fila)
 }
 
 const activoBorrador = computed({
@@ -294,7 +296,13 @@ const columnasTabla = computed<ColumnaTabla[]>(() => [
   { clave: '_acciones', etiqueta: '', clase: 'w-36 text-right' },
 ])
 
-const emit = defineEmits<{ cambio: [] }>()
+/*
+ * `abrirFormulario` avisa de que el cajón se abre, con la fila cuando es una
+ * edición. Lo necesita cualquier formulario con estado propio fuera del
+ * borrador —una cascada de selects, por ejemplo—, que debe colocarse a partir
+ * de lo que la fila ya tiene guardado.
+ */
+const emit = defineEmits<{ cambio: []; abrirFormulario: [fila?: T] }>()
 
 /** Fuera de la plantilla: el `<` de un genérico en una interpolación confunde al formateador. */
 function valorDe(fila: T, clave: string) {

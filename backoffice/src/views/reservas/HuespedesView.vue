@@ -135,11 +135,11 @@ function validar(h: NuevoHuesped): Record<string, string> {
         descripcion="Entra en el programa de fidelidad de la cadena."
       />
 
-      <KmSwitch
-        v-model="borrador.activo"
-        etiqueta="Ficha activa"
-        descripcion="Archivarla la retira del buscador de reservas sin perder su historial."
-      />
+      <!--
+        El estado no se pregunta en el alta: una ficha nace buscable. Darlo de baja
+        es una decisión posterior, y KmCatalogo pone ese campo —con su aviso de
+        consecuencias— solo al editar.
+      -->
     </template>
   </KmCatalogo>
 </template>

@@ -1,14 +1,27 @@
-import type { Local, NuevoLocal } from '@/types'
+import type { Consulta, Local, LocalResuelto, NuevoLocal, Paginado } from '@/types'
 import { validarHorario } from '@/utils/validaciones'
-import { db } from './mock/db'
+import { aplicarConsulta } from './mock/consulta'
+import { db, latencia } from './mock/db'
 import { errorCampo, existeOtro } from './mock/reglas'
 import { crearRepositorio } from './mock/repositorio'
+import { ubigeosService } from './ubigeos.service'
 
 const repo = crearRepositorio('locales', {
   prefijo: 'l',
   entidad: 'Sede',
-  camposBusqueda: ['nombre', 'distrito', 'direccion', 'codigoEstablecimiento'],
+  camposBusqueda: ['nombre', 'direccion', 'codigoEstablecimiento'],
 })
+
+/** Abre el código de ubigeo en los tres nombres con los que se trabaja. */
+function resolver(l: Local): LocalResuelto {
+  const ubigeo = ubigeosService.obtener(l.ubigeoId)
+  return {
+    ...l,
+    departamento: ubigeo?.departamento,
+    provincia: ubigeo?.provincia,
+    distrito: ubigeo?.distrito,
+  }
+}
 
 function validar(datos: Partial<NuevoLocal>, id?: string) {
   if (datos.nombre !== undefined) {
@@ -33,6 +46,11 @@ function validar(datos: Partial<NuevoLocal>, id?: string) {
       )
     }
   }
+  if (datos.ubigeoId !== undefined && datos.ubigeoId !== '') {
+    if (!ubigeosService.obtener(datos.ubigeoId)) {
+      throw errorCampo('ubigeoId', 'Ese distrito no está en el padrón de ubigeos.')
+    }
+  }
   if (datos.horario && Object.keys(validarHorario(datos.horario)).length) {
     throw errorCampo('horario', 'Revisa el horario: hay días con horas incompletas.')
   }
@@ -46,6 +64,29 @@ function validar(datos: Partial<NuevoLocal>, id?: string) {
 export const localesService = {
   ...repo,
 
+  /*
+   * La consulta se resuelve antes de filtrar para que buscar «Barranco» o
+   * «Cusco» encuentre la sede: el distrito ya no es un campo suyo, es el
+   * nombre que hay detrás de su código.
+   */
+  async consultar(consulta?: Consulta): Promise<Paginado<LocalResuelto>> {
+    const resueltos = db.locales.map(resolver)
+    return latencia(
+      aplicarConsulta(resueltos, consulta, [
+        'nombre',
+        'direccion',
+        'codigoEstablecimiento',
+        'distrito',
+        'provincia',
+        'departamento',
+      ]),
+    )
+  },
+
+  async obtener(id: string): Promise<LocalResuelto> {
+    return resolver(await repo.obtener(id))
+  },
+
   async listarActivos(): Promise<Local[]> {
     const { items } = await repo.consultar({
       filtros: { activo: true },
@@ -56,14 +97,14 @@ export const localesService = {
     return items
   },
 
-  async crear(datos: NuevoLocal): Promise<Local> {
+  async crear(datos: NuevoLocal): Promise<LocalResuelto> {
     validar(datos)
-    return repo.crear({ ...datos, nombre: datos.nombre.trim() })
+    return resolver(await repo.crear({ ...datos, nombre: datos.nombre.trim() }))
   },
 
-  async actualizar(id: string, datos: Partial<NuevoLocal>): Promise<Local> {
+  async actualizar(id: string, datos: Partial<NuevoLocal>): Promise<LocalResuelto> {
     validar(datos, id)
-    return repo.actualizar(id, datos)
+    return resolver(await repo.actualizar(id, datos))
   },
 
   async eliminar(id: string): Promise<void> {

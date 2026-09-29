@@ -62,11 +62,31 @@ export interface HorarioDia {
  * cualquier establecimiento de la cadena, y así los datos maestros viajan sin
  * traducción entre verticales.
  */
+/**
+ * Un distrito del padrón del INEI, con su provincia y su departamento.
+ *
+ * El código son seis dígitos y no es decorativo: los dos primeros son el
+ * departamento, los dos siguientes la provincia y los dos últimos el distrito,
+ * así que `150116` ya dice «Lima / Lima / Lince» sin consultar nada. Es el
+ * mismo código que piden SUNAT y los formularios de hospedaje.
+ *
+ * Vive en el núcleo, no en la vertical: lo usan la dirección de una sede, la
+ * de un proveedor y la de un huésped por igual.
+ */
+export interface Ubigeo {
+  /** Código INEI de seis dígitos. Es la clave. */
+  id: string
+  departamento: string
+  provincia: string
+  distrito: string
+}
+
 export interface Local {
   id: string
   nombre: string
   direccion: string
-  distrito: string
+  /** Código de ubigeo del distrito. Los nombres se resuelven, no se guardan. */
+  ubigeoId?: string
   telefono?: string
   /** Código de establecimiento SUNAT, 4 dígitos. */
   codigoEstablecimiento: string
@@ -81,6 +101,16 @@ export interface Local {
 }
 
 export type NuevoLocal = Omit<Local, 'id'>
+
+/**
+ * Sede con su ubigeo abierto en los tres nombres que se enseñan en pantalla.
+ * Se derivan del código: guardarlos sería tener la misma verdad dos veces.
+ */
+export interface LocalResuelto extends Local {
+  departamento?: string
+  provincia?: string
+  distrito?: string
+}
 
 // ── Alojamiento: pisos, tipos y habitaciones ─────────────────────────────────
 

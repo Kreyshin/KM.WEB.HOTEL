@@ -4,7 +4,6 @@ import KmCatalogo from '@/components/ui/KmCatalogo.vue'
 import KmField from '@/components/ui/KmField.vue'
 import KmInput from '@/components/ui/KmInput.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
-import KmSwitch from '@/components/ui/KmSwitch.vue'
 import { etiquetasRol } from '@/components/layout/navegacion'
 import { usuariosService } from '@/services/usuarios.service'
 import type { Rol, Usuario } from '@/types'
@@ -76,11 +75,11 @@ function validar(u: Omit<Usuario, 'id'>): Record<string, string> {
       <KmField v-slot="{ id }" label="Rol">
         <KmSelect :id="id" v-model="borrador.rol" :opciones="roles" />
       </KmField>
-      <KmSwitch
-        v-model="borrador.activo"
-        etiqueta="Cuenta activa"
-        descripcion="Una cuenta inactiva no puede iniciar sesión."
-      />
+      <!--
+        El estado no se pregunta en el alta: una cuenta nace pudiendo entrar. Darlo de baja
+        es una decisión posterior, y KmCatalogo pone ese campo —con su aviso de
+        consecuencias— solo al editar.
+      -->
     </template>
   </KmCatalogo>
 </template>

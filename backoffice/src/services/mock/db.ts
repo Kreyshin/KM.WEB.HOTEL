@@ -27,10 +27,12 @@ import type {
   Temporada,
   TipoHabitacion,
   Turno,
+  Ubigeo,
   Usuario,
   ValoresConfiguracion,
 } from '@/types'
 import { simularRed } from './red'
+import { ubigeos } from './ubigeos'
 
 /**
  * La clave lleva versión: al cambiar la forma de los datos se sube el número y
@@ -41,6 +43,7 @@ const CLAVE = 'km.hotel.mock.v1'
 export interface Esquema {
   empresa: Empresa
   impuestos: ConfigImpuestos
+  ubigeos: Ubigeo[]
   locales: Local[]
   usuarios: Usuario[]
   pisos: Piso[]
@@ -183,12 +186,14 @@ function semilla(): Esquema {
 
     impuestos: { igv: 18, preciosIncluyenIgv: true, exoneracionNoDomiciliados: true },
 
+    ubigeos,
+
     locales: [
       {
         id: 'l1',
         nombre: 'Alba Miraflores',
         direccion: 'Malecón Cisneros 1240',
-        distrito: 'Miraflores',
+        ubigeoId: '150122',
         telefono: '(01) 445 8800',
         codigoEstablecimiento: '0001',
         horaCheckIn: '15:00',
@@ -201,7 +206,7 @@ function semilla(): Esquema {
         id: 'l2',
         nombre: 'Alba Barranco',
         direccion: 'Av. Pedro de Osma 380',
-        distrito: 'Barranco',
+        ubigeoId: '150104',
         telefono: '(01) 247 1120',
         codigoEstablecimiento: '0002',
         horaCheckIn: '14:00',

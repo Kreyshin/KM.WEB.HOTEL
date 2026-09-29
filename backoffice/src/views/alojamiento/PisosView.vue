@@ -4,7 +4,6 @@ import KmCatalogo from '@/components/ui/KmCatalogo.vue'
 import KmField from '@/components/ui/KmField.vue'
 import KmInput from '@/components/ui/KmInput.vue'
 import KmNumero from '@/components/ui/KmNumero.vue'
-import KmSwitch from '@/components/ui/KmSwitch.vue'
 import { pisosService } from '@/services/pisos.service'
 import { useLocalStore } from '@/stores/local.store'
 import type { NuevoPiso, Piso } from '@/types'
@@ -80,7 +79,11 @@ function validar(p: NuevoPiso): Record<string, string> {
           <KmNumero :id="id" v-model="borrador.orden" :min="1" :max="99" />
         </KmField>
       </div>
-      <KmSwitch v-model="borrador.activo" etiqueta="Piso activo" />
+      <!--
+        El estado no se pregunta en el alta: un piso nace en servicio. Darlo de baja
+        es una decisión posterior, y KmCatalogo pone ese campo —con su aviso de
+        consecuencias— solo al editar.
+      -->
     </template>
   </KmCatalogo>
 </template>
