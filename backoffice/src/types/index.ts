@@ -285,7 +285,45 @@ export type NuevoHuesped = Omit<Huesped, 'id'>
 // ── Reservas y estancias ─────────────────────────────────────────────────────
 
 /** De dónde viene la reserva. Las OTA llegan por integración, no se teclean. */
-export type CanalReserva = 'directo' | 'telefono' | 'web' | 'booking' | 'expedia' | 'corporativo'
+/**
+ * Código del canal por el que entró la reserva.
+ *
+ * Era una lista cerrada en el código, y eso significaba que abrir un canal
+ * nuevo —una agencia, un mayorista, un convenio— pedía tocar el programa. Ahora
+ * es el **id de un `Canal`**, que se da de alta desde la pantalla. Las reservas
+ * guardadas siguen valiendo porque los seis códigos de siempre son los ids
+ * sembrados.
+ */
+export type CanalReserva = string
+
+/** Familia del canal. Decide si hay comisión y si la reserva se teclea o llega sola. */
+export type TipoCanal = 'directo' | 'ota' | 'agencia' | 'corporativo'
+
+/**
+ * Un canal de venta, con lo que cuesta vender por él.
+ *
+ * `comision` es lo que se lleva el intermediario sobre lo vendido: no cambia
+ * el precio del huésped, cambia lo que le queda al hotel. `ajuste` sí mueve el
+ * precio publicado, que es como se compensa esa comisión —paridad de tarifas—.
+ * Son dos números distintos y confundirlos es cómo un hotel cree que gana un
+ * 18 % más y en realidad gana igual.
+ */
+export interface Canal {
+  id: string
+  /** Código corto —`directo`, `booking`— y lo que guarda cada reserva. */
+  codigo: string
+  nombre: string
+  tipo: TipoCanal
+  /** % que se lleva el canal sobre la venta. */
+  comision: number
+  /** % sobre la tarifa resuelta, por defecto para todos los tipos. */
+  ajuste: number
+  /** Las OTA no se teclean: llegan por integración. */
+  automatico: boolean
+  activo: boolean
+}
+
+export type NuevoCanal = Omit<Canal, 'id'>
 
 /**
  * Ciclo de vida de la reserva. `enCasa` es la estancia viva: la reserva dejó
@@ -424,7 +462,7 @@ export interface Temporada {
   /** Noches mínimas exigidas en esta temporada. */
   minimoNoches?: number
   color: TonoTarifa
-  activa: boolean
+  activo: boolean
 }
 
 export type NuevaTemporada = Omit<Temporada, 'id'>
@@ -437,9 +475,9 @@ export interface TarifaCanal {
   id: string
   tipoId: string
   canal: CanalReserva
-  /** Ajuste sobre la tarifa resuelta, en %. Las OTA suelen ir con comisión. */
+  /** Ajuste sobre la tarifa resuelta, en %. Pisa el del canal para este tipo. */
   ajuste: number
-  activa: boolean
+  activo: boolean
 }
 
 // ── Inventario de piso (amenities y lencería) ────────────────────────────────

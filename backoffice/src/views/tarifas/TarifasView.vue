@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
+import { useCanales } from '@/composables/useCanales'
 import { useCarga } from '@/composables/useCarga'
 import KmCard from '@/components/ui/KmCard.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
 import { tarifasService } from '@/services/tarifas.service'
 import { useUiStore } from '@/stores/ui.store'
 import type { CanalReserva } from '@/types'
-import type { OpcionSelect } from '@/types/ui'
-import { etiquetaCanal, fechaCorta, formatearSoles } from '@/utils/formato'
+import { fechaCorta, formatearSoles } from '@/utils/formato'
 
 /**
  * Rejilla de tarifas: un tipo por fila, los próximos catorce días por columna.
@@ -23,9 +23,8 @@ const canal = ref<string | number | undefined>('directo')
 const rejilla = ref<Awaited<ReturnType<typeof tarifasService.rejilla>> | null>(null)
 const { cargando, iniciar, terminar } = useCarga()
 
-const canales: OpcionSelect[] = (
-  ['directo', 'web', 'telefono', 'booking', 'expedia', 'corporativo'] as CanalReserva[]
-).map((c) => ({ valor: c, etiqueta: etiquetaCanal[c] }))
+/* La lista sale del maestro de canales, no de una copia escrita aquí. */
+const { cargar: cargarCanales, opciones: canales } = useCanales()
 
 async function cargar() {
   iniciar()
@@ -38,7 +37,10 @@ async function cargar() {
   }
 }
 
-onMounted(cargar)
+onMounted(async () => {
+  await cargarCanales()
+  await cargar()
+})
 watch(canal, cargar)
 
 /** Fin de semana: se marca en la cabecera porque es donde se mueve el precio. */

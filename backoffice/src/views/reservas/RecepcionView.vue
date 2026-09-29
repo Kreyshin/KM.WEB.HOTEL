@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCanales } from '@/composables/useCanales'
 import { useCarga } from '@/composables/useCarga'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmButton from '@/components/ui/KmButton.vue'
@@ -12,7 +13,7 @@ import { useLocalStore } from '@/stores/local.store'
 import { useUiStore } from '@/stores/ui.store'
 import type { HabitacionResuelta, ReservaResuelta } from '@/types'
 import type { OpcionSelect } from '@/types/ui'
-import { etiquetaCanal, etiquetaRegimen, fechaLarga, formatearSoles } from '@/utils/formato'
+import { etiquetaRegimen, fechaLarga, formatearSoles } from '@/utils/formato'
 import { etiquetaReserva, tonoReserva } from '@/utils/habitaciones'
 
 /**
@@ -25,6 +26,7 @@ import { etiquetaReserva, tonoReserva } from '@/utils/habitaciones'
 
 const localStore = useLocalStore()
 const ui = useUiStore()
+const { cargar: cargarCanales, nombre: nombreCanal } = useCanales()
 
 const llegadas = ref<ReservaResuelta[]>([])
 const salidas = ref<ReservaResuelta[]>([])
@@ -56,6 +58,7 @@ async function cargar() {
   }
 }
 
+onMounted(cargarCanales)
 onMounted(async () => {
   if (!localStore.localId) await localStore.cargar().catch(() => undefined)
   cargar()
@@ -131,7 +134,7 @@ async function hacerCheckOut(reserva: ReservaResuelta) {
               </p>
               <p class="mt-0.5 text-xs text-tenue">
                 {{ r.codigo }} · {{ r.tipo?.nombre }} · {{ r.noches }} noches ·
-                {{ etiquetaCanal[r.canal] }} · {{ etiquetaRegimen[r.regimen] }}
+                {{ nombreCanal(r.canal) }} · {{ etiquetaRegimen[r.regimen] }}
               </p>
               <p v-if="r.notas" class="mt-1 text-xs text-turquesa-texto">{{ r.notas }}</p>
             </div>

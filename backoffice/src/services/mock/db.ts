@@ -20,6 +20,7 @@ import type {
   Piso,
   Reserva,
   RegistroAuditoria,
+  Canal,
   Rol,
   SerieComprobante,
   TareaLimpieza,
@@ -58,6 +59,7 @@ export interface Esquema {
   estancias: Estancia[]
   tareas: TareaLimpieza[]
   incidencias: Incidencia[]
+  canales: Canal[]
   temporadas: Temporada[]
   tarifasCanal: TarifaCanal[]
   insumos: Insumo[]
@@ -914,6 +916,73 @@ function semilla(): Esquema {
       },
     ],
 
+    /*
+     * Los seis canales de siempre, ahora como filas. El id es el código que
+     * las reservas ya guardaban, así que nada de lo vendido se queda huérfano.
+     */
+    canales: [
+      {
+        id: 'c1',
+        codigo: 'directo',
+        nombre: 'Directo (mostrador)',
+        tipo: 'directo',
+        comision: 0,
+        ajuste: 0,
+        automatico: false,
+        activo: true,
+      },
+      {
+        id: 'c2',
+        codigo: 'telefono',
+        nombre: 'Teléfono',
+        tipo: 'directo',
+        comision: 0,
+        ajuste: 0,
+        automatico: false,
+        activo: true,
+      },
+      {
+        id: 'c3',
+        codigo: 'web',
+        nombre: 'Web propia',
+        tipo: 'directo',
+        comision: 0,
+        ajuste: 5,
+        automatico: true,
+        activo: true,
+      },
+      {
+        id: 'c4',
+        codigo: 'booking',
+        nombre: 'Booking.com',
+        tipo: 'ota',
+        comision: 15,
+        ajuste: 15,
+        automatico: true,
+        activo: true,
+      },
+      {
+        id: 'c5',
+        codigo: 'expedia',
+        nombre: 'Expedia',
+        tipo: 'ota',
+        comision: 18,
+        ajuste: 18,
+        automatico: true,
+        activo: true,
+      },
+      {
+        id: 'c6',
+        codigo: 'corporativo',
+        nombre: 'Convenio corporativo',
+        tipo: 'corporativo',
+        comision: 0,
+        ajuste: -12,
+        automatico: false,
+        activo: true,
+      },
+    ],
+
     temporadas: [
       {
         id: 's1',
@@ -922,7 +991,7 @@ function semilla(): Esquema {
         hasta: dia(-10),
         factor: 0.85,
         color: 'salvia',
-        activa: true,
+        activo: true,
       },
       {
         id: 's2',
@@ -931,7 +1000,7 @@ function semilla(): Esquema {
         hasta: dia(20),
         factor: 1,
         color: 'azul',
-        activa: true,
+        activo: true,
       },
       {
         id: 's3',
@@ -941,7 +1010,7 @@ function semilla(): Esquema {
         factor: 1.4,
         minimoNoches: 2,
         color: 'turquesa',
-        activa: true,
+        activo: true,
       },
       {
         id: 's4',
@@ -951,18 +1020,18 @@ function semilla(): Esquema {
         factor: 1.65,
         minimoNoches: 3,
         color: 'coral',
-        activa: true,
+        activo: true,
       },
     ],
 
     tarifasCanal: [
-      { id: 'tc1', tipoId: 't1', canal: 'directo', ajuste: 0, activa: true },
-      { id: 'tc2', tipoId: 't2', canal: 'directo', ajuste: 0, activa: true },
-      { id: 'tc3', tipoId: 't2', canal: 'booking', ajuste: 15, activa: true },
-      { id: 'tc4', tipoId: 't2', canal: 'expedia', ajuste: 18, activa: true },
-      { id: 'tc5', tipoId: 't3', canal: 'corporativo', ajuste: -12, activa: true },
-      { id: 'tc6', tipoId: 't5', canal: 'expedia', ajuste: 20, activa: true },
-      { id: 'tc7', tipoId: 't4', canal: 'web', ajuste: 5, activa: true },
+      { id: 'tc1', tipoId: 't1', canal: 'directo', ajuste: 0, activo: true },
+      { id: 'tc2', tipoId: 't2', canal: 'directo', ajuste: 0, activo: true },
+      { id: 'tc3', tipoId: 't2', canal: 'booking', ajuste: 15, activo: true },
+      { id: 'tc4', tipoId: 't2', canal: 'expedia', ajuste: 18, activo: true },
+      { id: 'tc5', tipoId: 't3', canal: 'corporativo', ajuste: -12, activo: true },
+      { id: 'tc6', tipoId: 't5', canal: 'expedia', ajuste: 20, activo: true },
+      { id: 'tc7', tipoId: 't4', canal: 'web', ajuste: 5, activo: true },
     ],
 
     insumos: [

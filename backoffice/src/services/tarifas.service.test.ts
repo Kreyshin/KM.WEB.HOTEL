@@ -42,7 +42,7 @@ describe('resolución de tarifa', () => {
         hasta: media.hasta,
         factor: 1.2,
         color: 'coral',
-        activa: true,
+        activo: true,
       }),
     ).rejects.toMatchObject({ campos: { desde: expect.stringContaining('Fechas ocupadas') } })
   })

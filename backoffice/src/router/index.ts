@@ -128,8 +128,8 @@ const rutas: RouteRecordRaw[] = [
       {
         path: 'tarifas/canales',
         name: 'canales',
-        component: () => import('@/views/EnConstruccionView.vue'),
-        meta: { titulo: 'Canales y OTA', roles: ['admin'] },
+        component: () => import('@/views/tarifas/CanalesView.vue'),
+        meta: { titulo: 'Canales y comisiones', roles: ['admin'] },
       },
 
       // ── Administración ──────────────────────────────────────────────────

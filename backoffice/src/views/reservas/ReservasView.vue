@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useCanales } from '@/composables/useCanales'
 import { useCarga } from '@/composables/useCarga'
 import HsIcono from '@/components/hotel/HsIcono.vue'
 import BarraReserva, { type ModoArrastre } from '@/components/planning/BarraReserva.vue'
@@ -28,7 +29,7 @@ import type {
   TipoHabitacion,
 } from '@/types'
 import type { OpcionSelect } from '@/types/ui'
-import { etiquetaCanal, etiquetaRegimen, formatearSoles } from '@/utils/formato'
+import { etiquetaRegimen, formatearSoles } from '@/utils/formato'
 import { etiquetaLimpieza, etiquetaReserva, tonoReserva } from '@/utils/habitaciones'
 
 /**
@@ -66,6 +67,17 @@ const ANCHO_HABITACION = 148
 
 const localStore = useLocalStore()
 const ui = useUiStore()
+
+/*
+ * Solo los canales que se teclean: una reserva de Booking entra por
+ * integración, y ofrecerla en el mostrador invita a crear a mano lo que el
+ * canal va a mandar igual, con dos reservas para la misma cama.
+ */
+const {
+  cargar: cargarCanales,
+  nombre: nombreCanal,
+  opcionesManuales: opcionesCanalMaestro,
+} = useCanales()
 
 const habitaciones = ref<HabitacionResuelta[]>([])
 const reservas = ref<ReservaResuelta[]>([])
@@ -255,6 +267,7 @@ async function cargar() {
   }
 }
 
+onMounted(cargarCanales)
 onMounted(async () => {
   await cargar()
   try {
@@ -533,9 +546,12 @@ const opcionesHuesped = computed<OpcionSelect[]>(() => [
   })),
 ])
 
-const opcionesCanal: OpcionSelect[] = (
-  ['directo', 'telefono', 'web', 'booking', 'expedia', 'corporativo'] as CanalReserva[]
-).map((c) => ({ valor: c, etiqueta: etiquetaCanal[c] }))
+/*
+ * Solo los canales que se teclean: una reserva de Booking entra por
+ * integración, y ofrecerla en el mostrador invita a crear a mano lo que el
+ * canal va a mandar igual, con dos reservas para la misma cama.
+ */
+const opcionesCanal = opcionesCanalMaestro
 
 const opcionesRegimen: OpcionSelect[] = (
   ['soloAlojamiento', 'desayuno', 'mediaPension', 'pensionCompleta'] as Regimen[]
@@ -972,7 +988,7 @@ async function moverDesdePanel() {
           <KmBadge :tono="tonoReserva[seleccionada.estado]" punto>
             {{ etiquetaReserva[seleccionada.estado] }}
           </KmBadge>
-          <KmBadge tono="neutro">{{ etiquetaCanal[seleccionada.canal] }}</KmBadge>
+          <KmBadge tono="neutro">{{ nombreCanal(seleccionada.canal) }}</KmBadge>
         </div>
       </header>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import HsIcono from '@/components/hotel/HsIcono.vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmBusqueda from '@/components/ui/KmBusqueda.vue'
@@ -7,11 +7,12 @@ import KmButton from '@/components/ui/KmButton.vue'
 import KmPaginacion from '@/components/ui/KmPaginacion.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
 import KmTable from '@/components/ui/KmTable.vue'
+import { useCanales } from '@/composables/useCanales'
 import { useListado } from '@/composables/useListado'
 import { reservasService } from '@/services/reservas.service'
-import type { CanalReserva, ReservaResuelta } from '@/types'
+import type { ReservaResuelta } from '@/types'
 import type { ColumnaTabla, OpcionSelect } from '@/types/ui'
-import { etiquetaCanal, fechaCorta, formatearSoles } from '@/utils/formato'
+import { fechaCorta, formatearSoles } from '@/utils/formato'
 import { estadosReserva, etiquetaReserva, tonoReserva } from '@/utils/habitaciones'
 
 /**
@@ -49,12 +50,14 @@ const opcionesEstado: OpcionSelect[] = [
   ...estadosReserva.map((e) => ({ valor: e, etiqueta: etiquetaReserva[e] })),
 ]
 
-const opcionesCanal: OpcionSelect[] = [
+/* Los canales salen del maestro: uno nuevo aparece aquí sin tocar esta vista. */
+const { cargar: cargarCanales, nombre: nombreCanal, opciones } = useCanales()
+onMounted(cargarCanales)
+
+const opcionesCanal = computed<OpcionSelect[]>(() => [
   { valor: '', etiqueta: 'Todos los canales' },
-  ...(['directo', 'telefono', 'web', 'booking', 'expedia', 'corporativo'] as CanalReserva[]).map(
-    (c) => ({ valor: c, etiqueta: etiquetaCanal[c] }),
-  ),
-]
+  ...opciones.value,
+])
 
 function filtro(clave: string) {
   return computed({
@@ -122,7 +125,7 @@ const filtroCanal = filtro('canal')
       </template>
 
       <template #col-canal="{ fila }">
-        <span class="text-sm text-tenue">{{ etiquetaCanal[fila.canal] }}</span>
+        <span class="text-sm text-tenue">{{ nombreCanal(fila.canal) }}</span>
       </template>
 
       <template #col-tarifaNoche="{ fila }">

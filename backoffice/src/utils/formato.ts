@@ -1,11 +1,4 @@
-import type {
-  CanalReserva,
-  CategoriaInsumo,
-  Regimen,
-  TipoDocumento,
-  TipoMovimiento,
-  UnidadMedida,
-} from '@/types'
+import type { CategoriaInsumo, Regimen, TipoDocumento, TipoMovimiento, UnidadMedida } from '@/types'
 
 /** Importe en soles, con separador de miles y dos decimales. */
 export function formatearSoles(monto: number) {
@@ -62,17 +55,13 @@ export const etiquetaRegimen: Record<Regimen, string> = {
   pensionCompleta: 'Pensión completa',
 }
 
-export const etiquetaCanal: Record<CanalReserva, string> = {
-  directo: 'Directo',
-  telefono: 'Teléfono',
-  web: 'Web propia',
-  booking: 'Booking.com',
-  expedia: 'Expedia',
-  corporativo: 'Corporativo',
-}
-
-/** Las OTA no se teclean: llegan por integración y no se editan a mano. */
-export const canalesExternos: CanalReserva[] = ['booking', 'expedia']
+/*
+ * Aquí ya no hay nombres de canal.
+ *
+ * Eran un mapa fijo de seis, y con los canales dados de alta desde su pantalla
+ * el nombre lo da el maestro: `useCanales().nombre(codigo)`. Tener las dos
+ * cosas significaba que un canal nuevo saldría sin nombre en media aplicación.
+ */
 
 export const etiquetaDocumento: Record<TipoDocumento, string> = {
   dni: 'DNI',

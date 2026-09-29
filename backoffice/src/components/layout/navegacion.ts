@@ -137,8 +137,8 @@ export const modulos: ModuloNav[] = [
       },
       {
         nombreRuta: 'canales',
-        etiqueta: 'Canales y OTA',
-        descripcion: 'Ajuste y comisión por canal de venta',
+        etiqueta: 'Canales y comisiones',
+        descripcion: 'Por dónde entra la reserva y qué cuesta venderla',
         roles: ['admin'],
       },
     ],

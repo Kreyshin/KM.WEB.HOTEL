@@ -9,7 +9,10 @@ const temporadas = crearRepositorio('temporadas', {
   camposBusqueda: ['nombre'],
 })
 
-const canales = crearRepositorio('tarifasCanal', { prefijo: 'tc', entidad: 'Tarifa de canal' })
+const tarifasCanal = crearRepositorio('tarifasCanal', {
+  prefijo: 'tc',
+  entidad: 'Tarifa de canal',
+})
 
 function validarTemporada(datos: Partial<NuevaTemporada>, id?: string) {
   if (datos.nombre !== undefined && !datos.nombre.trim()) {
@@ -25,7 +28,7 @@ function validarTemporada(datos: Partial<NuevaTemporada>, id?: string) {
   if (datos.desde && datos.hasta) {
     const choque = db.temporadas.find(
       (t) =>
-        t.id !== id && t.activa && t.desde <= (datos.hasta ?? '') && t.hasta >= (datos.desde ?? ''),
+        t.id !== id && t.activo && t.desde <= (datos.hasta ?? '') && t.hasta >= (datos.desde ?? ''),
     )
     if (choque) {
       throw errorCampo('desde', `Se solapa con «${choque.nombre}».`, 'Fechas ocupadas')
@@ -39,18 +42,22 @@ function validarTemporada(datos: Partial<NuevaTemporada>, id?: string) {
  * Orden de aplicación: tarifa base del tipo → factor de temporada → ajuste del
  * canal → redondeo configurado. Es el mismo orden que usará el backend, así que
  * la vista ya muestra el número definitivo.
+ *
+ * El ajuste sale del canal, y solo se pisa si ese tipo tiene una fila propia
+ * para ese canal. Antes, un tipo sin fila se vendía en Booking al mismo precio
+ * que en el mostrador: la comisión se la comía el hotel entero sin que nadie lo
+ * viera en ninguna pantalla.
  */
 export function resolverTarifa(tipoId: string, fecha: string, canal: CanalReserva = 'directo') {
   const tipo = db.tiposHabitacion.find((t) => t.id === tipoId)
   if (!tipo) return { base: 0, factor: 1, ajuste: 0, precio: 0 }
 
-  const temporada = db.temporadas.find((t) => t.activa && t.desde <= fecha && t.hasta >= fecha)
-  const tarifaCanal = db.tarifasCanal.find(
-    (t) => t.tipoId === tipoId && t.canal === canal && t.activa,
-  )
+  const temporada = db.temporadas.find((t) => t.activo && t.desde <= fecha && t.hasta >= fecha)
+  const propia = db.tarifasCanal.find((t) => t.tipoId === tipoId && t.canal === canal && t.activo)
+  const canalVenta = db.canales.find((c) => c.codigo === canal)
 
   const factor = temporada?.factor ?? 1
-  const ajuste = tarifaCanal?.ajuste ?? 0
+  const ajuste = propia?.ajuste ?? canalVenta?.ajuste ?? 0
   const bruto = tipo.tarifaBase * factor * (1 + ajuste / 100)
 
   const paso = Number(db.configuracion.vertical['tarifa.redondearA'] ?? 1) || 1
@@ -58,7 +65,14 @@ export function resolverTarifa(tipoId: string, fecha: string, canal: CanalReserv
     base: tipo.tarifaBase,
     factor,
     ajuste,
+    /** De dónde salió el ajuste: ayuda a entender el número en la rejilla. */
+    origenAjuste: propia
+      ? ('tipo' as const)
+      : canalVenta
+        ? ('canal' as const)
+        : ('ninguno' as const),
     temporada,
+    canal: canalVenta,
     precio: Math.round(bruto / paso) * paso,
   }
 }
@@ -83,10 +97,10 @@ export const tarifasService = {
     },
   },
 
-  canales: {
-    ...canales,
+  tarifasCanal: {
+    ...tarifasCanal,
     async listar(): Promise<TarifaCanal[]> {
-      const { items } = await canales.consultar({ porPagina: 200 })
+      const { items } = await tarifasCanal.consultar({ porPagina: 200 })
       return items
     },
   },
