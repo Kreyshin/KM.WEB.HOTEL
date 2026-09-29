@@ -149,6 +149,12 @@ export const modulos: ModuloNav[] = [
     icono: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
     secciones: [
       {
+        nombreRuta: 'cierre-dia',
+        etiqueta: 'Cierre de día',
+        descripcion: 'Carga la noche, congela las cifras y avanza la fecha',
+        roles: ['admin', 'recepcion'],
+      },
+      {
         nombreRuta: 'reportes',
         etiqueta: 'Producción y ocupación',
         descripcion: 'ADR, RevPAR y cierre de caja',

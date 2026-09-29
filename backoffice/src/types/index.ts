@@ -543,6 +543,41 @@ export interface ConfigImpuestos {
 
 // ── Operación y auditoría ────────────────────────────────────────────────────
 
+/**
+ * El día cerrado: la foto que ya nadie puede tocar.
+ *
+ * Es lo que convierte a un hotel en una empresa auditable. Mientras el día
+ * está abierto, cada consulta da un número distinto según la hora a la que se
+ * pregunte; una vez cerrado, la ocupación del martes es la ocupación del
+ * martes para siempre, y el mes es la suma de días cerrados y no una
+ * estimación.
+ */
+export interface CierreDia {
+  id: string
+  localId: string
+  /** `YYYY-MM-DD`. El día que se cierra, no el día en que se cerró. */
+  fecha: string
+  /** Habitaciones que se podían vender esa noche: las no bloqueadas. */
+  vendibles: number
+  /** Habitaciones con huésped dentro al hacer el corte. */
+  ocupadas: number
+  /** Ocupadas sobre vendibles, en %. */
+  ocupacion: number
+  /** Tarifa media diaria: alojamiento facturado entre noches vendidas. */
+  adr: number
+  /** Ingreso por habitación disponible: alojamiento entre vendibles. */
+  revpar: number
+  /** Soles de alojamiento cargados esa noche. */
+  produccionAlojamiento: number
+  /** Soles de consumos acumulados en los folios vivos. */
+  produccionConsumos: number
+  /** Reservas que no se presentaron y el cierre marcó. */
+  noShows: number
+  cerradoPor: string
+  /** ISO. Cuándo se ejecutó el cierre. */
+  cerradoEn: string
+}
+
 export interface Turno {
   id: string
   localId: string

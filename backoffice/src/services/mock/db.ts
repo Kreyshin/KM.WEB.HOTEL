@@ -21,6 +21,7 @@ import type {
   Reserva,
   RegistroAuditoria,
   Canal,
+  CierreDia,
   Rol,
   SerieComprobante,
   TareaLimpieza,
@@ -66,6 +67,7 @@ export interface Esquema {
   movimientos: Movimiento[]
   series: SerieComprobante[]
   motivos: Motivo[]
+  cierres: CierreDia[]
   turnos: Turno[]
   bitacora: RegistroAuditoria[]
   permisosPorRol: Record<Rol, string[]>
@@ -1229,6 +1231,9 @@ function semilla(): Esquema {
         activo: true,
       },
     ],
+
+    /* Sin días cerrados: el hotel arranca su contabilidad hoy. */
+    cierres: [],
 
     turnos: [
       {

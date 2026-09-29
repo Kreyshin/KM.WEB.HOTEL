@@ -83,6 +83,7 @@ export default defineConfig({
             { text: 'El ciclo de limpieza', link: '/procesos/limpieza' },
             { text: 'Una habitación averiada', link: '/procesos/averia' },
             { text: 'El precio de una noche', link: '/procesos/precio' },
+            { text: 'El cierre de día', link: '/procesos/cierre-dia' },
           ],
         },
       ],

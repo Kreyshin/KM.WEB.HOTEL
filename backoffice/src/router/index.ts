@@ -146,6 +146,12 @@ const rutas: RouteRecordRaw[] = [
         meta: { titulo: 'Facturación SUNAT', roles: ['admin', 'recepcion'] },
       },
       {
+        path: 'cierre-dia',
+        name: 'cierre-dia',
+        component: () => import('@/views/admin/CierreDiaView.vue'),
+        meta: { titulo: 'Cierre de día', roles: ['admin', 'recepcion'] },
+      },
+      {
         path: 'usuarios',
         name: 'usuarios',
         component: () => import('@/views/admin/UsuariosView.vue'),
