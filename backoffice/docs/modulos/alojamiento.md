@@ -81,7 +81,26 @@ El plano tenía dos oficios y no cumplía ninguno, así que cada mitad se fue a 
 | Camas            | Lo que el huésped quiere saber antes de reservar                  |
 | Tarifa base      | El precio de referencia, antes de temporada y canal               |
 | Régimen          | Qué comida incluye                                                |
-| Servicios        | Amenities y equipamiento de la ficha comercial                    |
+| Descripción      | Cómo se anuncia el tipo. Sale en la tarjeta                       |
+| Servicios        | Lo que tienen **todas** las habitaciones del tipo                 |
+
+### Dónde vive cada servicio
+
+Los amenities están en tres alturas, y la pregunta que decide es siempre la misma: **¿esto cambia de una a otra?**
+
+| Altura         | Ejemplos                                         | La regla                                        |
+| -------------- | ------------------------------------------------ | ----------------------------------------------- |
+| **Sede**       | Wi-Fi, recepción 24 h, ascensor, estacionamiento | Lo tienen todos los tipos → no es del tipo      |
+| **Tipo**       | Minibar, caja fuerte, TV 50", bañera, terraza    | Distingue un tipo de otro y justifica el precio |
+| **Habitación** | Vista, piso, comunicada, accesible               | Cambia de puerta a puerta                       |
+
+El Wi-Fi estaba escrito en los cinco tipos, que es la señal de que no era suyo: cinco copias de la misma promesa y cinco sitios donde olvidarse de una. Ahora vive en la sede.
+
+**Los servicios del tipo son una promesa de venta, no una sugerencia.** Si el tipo Doble dice «minibar», todas las dobles tienen que tener minibar; el huésped compró eso. Por eso no se copian en cada habitación: la habitación los hereda, y guardar una copia por puerta sería tener dos verdades sobre lo mismo.
+
+### El régimen es del precio, no del tipo
+
+El régimen que se define aquí es el que entra en la tarifa base. Es suficiente mientras el hotel venda un solo plan, pero cuando llegue el momento de vender la misma doble como «solo alojamiento» a un precio y «con desayuno» a otro, el régimen tendrá que subir a la tarifa: es una decisión comercial, no una característica del inmueble.
 
 ::: warning Antes de borrar un tipo
 No se puede eliminar si existen habitaciones de ese tipo o reservas futuras. Desactívalo: deja de publicarse, pero conserva su histórico.

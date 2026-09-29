@@ -3,6 +3,7 @@ import PlanoTipo from '@/components/tipos/PlanoTipo.vue'
 import KmBadge from '@/components/ui/KmBadge.vue'
 import KmBotonIcono from '@/components/ui/KmBotonIcono.vue'
 import KmCatalogo from '@/components/ui/KmCatalogo.vue'
+import KmEtiquetas from '@/components/ui/KmEtiquetas.vue'
 import KmField from '@/components/ui/KmField.vue'
 import KmInput from '@/components/ui/KmInput.vue'
 import KmNumero from '@/components/ui/KmNumero.vue'
@@ -29,6 +30,28 @@ const columnas: ColumnaTabla[] = [
 const regimenes: OpcionSelect[] = (
   ['soloAlojamiento', 'desayuno', 'mediaPension', 'pensionCompleta'] as Regimen[]
 ).map((r) => ({ valor: r, etiqueta: etiquetaRegimen[r] }))
+
+/**
+ * Lo que distingue un tipo de otro dentro del mismo hotel.
+ *
+ * Aquí NO van el Wi-Fi ni la recepción 24 h: si lo tienen todos los tipos, no
+ * es del tipo, es del establecimiento, y repetirlo cinco veces solo consigue
+ * que un día uno se quede sin él por descuido. Eso vive en la sede.
+ */
+const SERVICIOS_DE_TIPO = [
+  'Minibar',
+  'Caja fuerte',
+  'TV 43"',
+  'TV 50"',
+  'Aire acondicionado',
+  'Escritorio',
+  'Bañera',
+  'Terraza',
+  'Sala',
+  'Cafetera',
+  'Cuna a pedido',
+  'Late check-out',
+]
 
 const nuevo = (): NuevoTipoHabitacion => ({
   codigo: '',
@@ -127,6 +150,15 @@ function validar(t: NuevoTipoHabitacion): Record<string, string> {
 
           <p class="mt-2 text-sm text-tenue">{{ fila.camas }}</p>
 
+          <!--
+            La descripción se pedía en el alta con la ayuda «cómo se anuncia el
+            tipo» y no se anunciaba en ninguna parte: ni en la tarjeta ni en la
+            tabla. Es el mismo defecto que los servicios, al revés.
+          -->
+          <p v-if="fila.descripcion" class="mt-1 text-xs leading-snug text-tenue italic">
+            {{ fila.descripcion }}
+          </p>
+
           <div class="mt-3 flex flex-wrap gap-1.5">
             <KmBadge tono="neutro">
               {{ fila.capacidad }} pax
@@ -150,8 +182,9 @@ function validar(t: NuevoTipoHabitacion): Record<string, string> {
             <li
               v-if="fila.servicios.length > 4"
               class="text-[11px] font-semibold text-turquesa-texto"
+              :title="fila.servicios.slice(4).join(' · ')"
             >
-              +{{ fila.servicios.length - 4 }}
+              +{{ fila.servicios.length - 4 }}: {{ fila.servicios.slice(4).join(' · ') }}
             </li>
           </ul>
 
@@ -222,10 +255,32 @@ function validar(t: NuevoTipoHabitacion): Record<string, string> {
         <KmField v-slot="{ id }" label="Tarifa base por noche">
           <KmNumero :id="id" v-model="borrador.tarifaBase" :min="0" :step="10" />
         </KmField>
-        <KmField v-slot="{ id }" label="Régimen incluido">
+        <KmField
+          v-slot="{ id }"
+          label="Régimen incluido"
+          ayuda="Lo que entra en el precio de la noche."
+        >
           <KmSelect :id="id" v-model="borrador.regimenIncluido" :opciones="regimenes" />
         </KmField>
       </div>
+
+      <!--
+        Estos servicios salían en la ficha comercial sin ningún campo detrás:
+        se veían y no se podían escribir. Son una promesa de venta, así que
+        todas las habitaciones del tipo tienen que cumplirlos.
+      -->
+      <KmField
+        v-slot="{ id }"
+        label="Servicios del tipo"
+        ayuda="Lo que tienen TODAS las habitaciones de este tipo y lo distingue de los demás. Los del hotel entero (Wi-Fi, recepción 24 h) van en la sede."
+      >
+        <KmEtiquetas
+          :id="id"
+          v-model="borrador.servicios"
+          :sugerencias="SERVICIOS_DE_TIPO"
+          placeholder="Minibar, bañera…"
+        />
+      </KmField>
 
       <!--
         El estado no se pregunta en el alta: un tipo nace publicándose. Darlo de baja

@@ -122,6 +122,15 @@ export interface Local {
   horaCheckOut: string
   /** Categoría comercial del establecimiento, en estrellas. */
   estrellas?: number
+  /**
+   * Servicios del establecimiento: los que tiene el hotel entero.
+   *
+   * Wi-Fi, recepción 24 h, ascensor, estacionamiento. Viven aquí y no en el
+   * tipo de habitación porque no distinguen una doble de una suite: las cubren
+   * a todas. Repetirlos en cada tipo era tener la misma promesa escrita cinco
+   * veces, y cinco sitios donde olvidarse de una.
+   */
+  servicios?: string[]
   horario?: HorarioDia[]
   activo: boolean
 }

@@ -35,6 +35,10 @@ Cada nivel se pide por el **id** del de arriba, nunca por su nombre: «Lima» es
 
 El extracto cargado trae Callao, Cusco y Lima, con Huaral como provincia de un solo distrito. Es poco a propósito: basta para trabajar la pantalla y ya contiene los casos que rompen una cascada mal hecha.
 
+### Los servicios de la sede
+
+Lo que cubre al hotel entero: Wi-Fi, recepción 24 h, ascensor, estacionamiento. Van aquí y no en el tipo de habitación porque no distinguen una doble de una suite — las cubren a todas. Lo que sí distingue un tipo de otro (minibar, bañera, terraza) vive en su ficha.
+
 ::: tip El estado no se pregunta al dar de alta
 Una sede nace activa, igual que un piso nace en servicio y una cuenta nace pudiendo entrar. Preguntar «¿activa?» en el alta solo invita a crear registros muertos. Darla de baja es una decisión posterior y tiene consecuencias, así que ese campo aparece **solo al editar**, con su aviso de qué arrastra.
 :::

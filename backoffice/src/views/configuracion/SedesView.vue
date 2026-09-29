@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import KmCatalogo from '@/components/ui/KmCatalogo.vue'
+import KmEtiquetas from '@/components/ui/KmEtiquetas.vue'
 import KmField from '@/components/ui/KmField.vue'
 import KmHora from '@/components/ui/KmHora.vue'
 import KmInput from '@/components/ui/KmInput.vue'
@@ -29,10 +30,25 @@ const columnas: ColumnaTabla[] = [
   { clave: 'codigoEstablecimiento', etiqueta: 'Cód. SUNAT', clase: 'w-36', ordenable: true },
 ]
 
+/** Lo que cubre al hotel entero, sin importar en qué habitación te alojes. */
+const SERVICIOS_DE_SEDE = [
+  'Wi-Fi',
+  'Recepción 24 h',
+  'Ascensor',
+  'Estacionamiento',
+  'Gimnasio',
+  'Piscina',
+  'Restaurante',
+  'Sala de reuniones',
+  'Traslado al aeropuerto',
+  'Admite mascotas',
+]
+
 const nuevo = (): NuevoLocal => ({
   nombre: '',
   direccion: '',
   ubigeoId: '',
+  servicios: [],
   codigoEstablecimiento: '',
   horaCheckIn: '15:00',
   horaCheckOut: '12:00',
@@ -226,6 +242,19 @@ const opDistritos = computed<OpcionSelect[]>(() =>
           v-model="borrador.codigoEstablecimiento"
           placeholder="0001"
           :invalido="invalido"
+        />
+      </KmField>
+
+      <KmField
+        v-slot="{ id }"
+        label="Servicios de la sede"
+        ayuda="Los que tiene el hotel entero. Lo que distingue a un tipo de habitación de otro va en su ficha, no aquí."
+      >
+        <KmEtiquetas
+          :id="id"
+          v-model="borrador.servicios"
+          :sugerencias="SERVICIOS_DE_SEDE"
+          placeholder="Wi-Fi, estacionamiento…"
         />
       </KmField>
 
