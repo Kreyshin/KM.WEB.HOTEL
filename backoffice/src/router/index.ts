@@ -178,6 +178,12 @@ const rutas: RouteRecordRaw[] = [
         meta: { titulo: 'Sedes', roles: ['admin'] },
       },
       {
+        path: 'configuracion/comprobantes',
+        name: 'comprobantes',
+        component: () => import('@/views/configuracion/ComprobantesView.vue'),
+        meta: { titulo: 'Comprobantes e impuestos', roles: ['admin'] },
+      },
+      {
         path: 'configuracion/motivos',
         name: 'config-motivos',
         component: () => import('@/views/EnConstruccionView.vue'),

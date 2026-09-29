@@ -199,6 +199,12 @@ export const modulos: ModuloNav[] = [
         roles: ['admin'],
       },
       {
+        nombreRuta: 'comprobantes',
+        etiqueta: 'Comprobantes e impuestos',
+        descripcion: 'Series de numeración e IGV',
+        roles: ['admin'],
+      },
+      {
         nombreRuta: 'config-motivos',
         etiqueta: 'Motivos',
         descripcion: 'Cancelación, bloqueo y cortesía',

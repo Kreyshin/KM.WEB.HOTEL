@@ -68,3 +68,36 @@ Sirven para que la bitácora responda _por qué_ pasó algo, y no solo _qué_ pa
 Quién entra y qué parte del hotel gestiona. Detalle en [Quién hace qué](/guia/roles).
 
 Una cuenta desactivada no puede iniciar sesión, y el sistema no deja quedarse sin ningún administrador activo.
+
+## Comprobantes e impuestos
+
+El último eslabón antes de la primera venta. Un hotel puede tener habitaciones, tarifas y canales y seguir sin poder cobrar: sin una serie activa no hay con qué emitir, y eso se descubre con el huésped delante y la maleta hecha. Por eso la pantalla avisa **antes** de que pase — si a la sede le falta una serie de boleta o de factura, lo dice arriba en rojo.
+
+### Series
+
+Una serie es una numeración: `B001`, y el correlativo del último comprobante que emitió. La letra no es una convención de la casa, la fija SUNAT:
+
+| Emite           | Serie                                          |
+| --------------- | ---------------------------------------------- |
+| Boleta          | `B001`                                         |
+| Factura         | `F001`                                         |
+| Nota de crédito | `BC01` o `FC01` — la del documento que corrige |
+| Nota de venta   | `NV01` — interno, sin valor tributario         |
+
+El formulario enseña el número que saldría: `B001-00004822`. La serie se repite entre sedes (cada establecimiento lleva la suya) pero no dentro de una.
+
+::: warning El correlativo no retrocede
+Bajarlo significa volver a entregar números ya emitidos: dos comprobantes distintos con el mismo número. Eso es una contingencia tributaria, no un error de pantalla, así que el sistema lo rechaza diciendo cuál fue el último.
+
+Por la misma razón, una serie que ya emitió **no se borra**: se desactiva.
+:::
+
+Al dar de alta sí se puede poner un correlativo inicial: es el caso de quien viene de otro sistema y arranca donde lo dejó.
+
+### Impuestos
+
+Valen para toda la cadena — el IGV no se da de alta, se cambia el día que lo cambia el Estado.
+
+- **IGV** — el vigente en Perú es 18 %.
+- **Los precios ya incluyen IGV** — lo normal en hotelería: el huésped ve el precio final. Si se apaga, el IGV se suma al facturar y la tarifa de la rejilla deja de ser lo que se cobra.
+- **Exonerar a no domiciliados** — D. Leg. 919: el hospedaje a un extranjero no domiciliado es exportación de servicios y no lleva IGV. Exige TAM y pasaporte, y no vale más allá de 60 días por entrada. Es la particularidad fiscal de la vertical, y por eso el check-in pregunta por el documento.
