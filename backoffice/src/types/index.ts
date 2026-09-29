@@ -62,19 +62,45 @@ export interface HorarioDia {
  * cualquier establecimiento de la cadena, y así los datos maestros viajan sin
  * traducción entre verticales.
  */
-/**
- * Un distrito del padrón del INEI, con su provincia y su departamento.
+/*
+ * El padrón de ubigeos del INEI, en las tres tablas que tiene en base de datos.
  *
- * El código son seis dígitos y no es decorativo: los dos primeros son el
- * departamento, los dos siguientes la provincia y los dos últimos el distrito,
- * así que `150116` ya dice «Lima / Lima / Lince» sin consultar nada. Es el
- * mismo código que piden SUNAT y los formularios de hospedaje.
+ * El código es jerárquico y ahí está toda la gracia: el departamento son dos
+ * dígitos, la provincia son esos dos más dos, y el distrito esos cuatro más
+ * dos. `15` → `1501` → `150122` es «Lima / Lima / Miraflores», y cada nivel
+ * lleva dentro la clave de su padre sin necesidad de mirar la tabla de arriba.
+ * Es el mismo código que piden SUNAT y los formularios de hospedaje.
  *
  * Vive en el núcleo, no en la vertical: lo usan la dirección de una sede, la
  * de un proveedor y la de un huésped por igual.
  */
+
+/** Dos dígitos: `15` es Lima. */
+export interface Departamento {
+  id: string
+  nombre: string
+}
+
+/** Cuatro dígitos: `1501` es la provincia de Lima, dentro del departamento 15. */
+export interface Provincia {
+  id: string
+  departamentoId: string
+  nombre: string
+}
+
+/** Seis dígitos: `150122` es Miraflores, dentro de la provincia 1501. */
+export interface Distrito {
+  id: string
+  provinciaId: string
+  nombre: string
+}
+
+/**
+ * Las tres tablas unidas, que es como se lee un ubigeo: un código y los tres
+ * nombres a los que pertenece. Se arma al consultar; no se guarda así.
+ */
 export interface Ubigeo {
-  /** Código INEI de seis dígitos. Es la clave. */
+  /** Código INEI de seis dígitos, el del distrito. */
   id: string
   departamento: string
   provincia: string

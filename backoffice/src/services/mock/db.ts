@@ -27,12 +27,14 @@ import type {
   Temporada,
   TipoHabitacion,
   Turno,
-  Ubigeo,
+  Departamento,
+  Distrito,
+  Provincia,
   Usuario,
   ValoresConfiguracion,
 } from '@/types'
 import { simularRed } from './red'
-import { ubigeos } from './ubigeos'
+import { departamentos, distritos, provincias } from './ubigeos'
 
 /**
  * La clave lleva versión: al cambiar la forma de los datos se sube el número y
@@ -43,7 +45,9 @@ const CLAVE = 'km.hotel.mock.v1'
 export interface Esquema {
   empresa: Empresa
   impuestos: ConfigImpuestos
-  ubigeos: Ubigeo[]
+  departamentos: Departamento[]
+  provincias: Provincia[]
+  distritos: Distrito[]
   locales: Local[]
   usuarios: Usuario[]
   pisos: Piso[]
@@ -186,7 +190,9 @@ function semilla(): Esquema {
 
     impuestos: { igv: 18, preciosIncluyenIgv: true, exoneracionNoDomiciliados: true },
 
-    ubigeos,
+    departamentos,
+    provincias,
+    distritos,
 
     locales: [
       {

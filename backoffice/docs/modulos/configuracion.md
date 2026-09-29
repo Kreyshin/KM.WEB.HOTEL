@@ -23,7 +23,17 @@ Tres razones para la cascada y no un campo de texto:
 
 Los tres nombres **no se guardan**: se derivan del código al leer. Por eso buscar «Barranco» o «Cusco» en el listado encuentra la sede aunque el distrito ya no sea un campo suyo.
 
-El padrón vive en el núcleo, no en la vertical: la dirección de una sede, la de un proveedor y la de un huésped apuntan todas a la misma tabla.
+El padrón vive en el núcleo, no en la vertical: la dirección de una sede, la de un proveedor y la de un huésped apuntan todas a las mismas tablas. Son **tres**, como en base de datos, y cada nivel lleva dentro la clave de su padre:
+
+| Tabla         | Clave     | Ejemplo               |
+| ------------- | --------- | --------------------- |
+| Departamentos | 2 dígitos | `15` · Lima           |
+| Provincias    | 4 dígitos | `1501` · Lima         |
+| Distritos     | 6 dígitos | `150122` · Miraflores |
+
+Cada nivel se pide por el **id** del de arriba, nunca por su nombre: «Lima» es departamento, provincia y distrito a la vez, así que filtrar por nombre traería cosas de tres sitios distintos. Por eso, al abrir una sede que ya tiene distrito, los tres combos se colocan partiendo el código: `150122` → `1501` → `15`.
+
+El extracto cargado trae Callao, Cusco y Lima, con Huaral como provincia de un solo distrito. Es poco a propósito: basta para trabajar la pantalla y ya contiene los casos que rompen una cascada mal hecha.
 
 ::: tip El estado no se pregunta al dar de alta
 Una sede nace activa, igual que un piso nace en servicio y una cuenta nace pudiendo entrar. Preguntar «¿activa?» en el alta solo invita a crear registros muertos. Darla de baja es una decisión posterior y tiene consecuencias, así que ese campo aparece **solo al editar**, con su aviso de qué arrastra.

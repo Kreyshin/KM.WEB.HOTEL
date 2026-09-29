@@ -19,21 +19,43 @@ beforeEach(() => {
 describe('ubigeosService', () => {
   it('acota cada nivel al anterior', async () => {
     const departamentos = await ubigeosService.departamentos()
-    expect(departamentos).toContain('Lima')
-    expect(departamentos).toContain('Cusco')
+    expect(departamentos.map((d) => d.nombre)).toEqual(['Callao', 'Cusco', 'Lima'])
 
-    const provincias = await ubigeosService.provincias('Cusco')
-    expect(provincias).toContain('Urubamba')
-    expect(provincias).not.toContain('Lima')
+    const provincias = await ubigeosService.provincias('08')
+    expect(provincias.map((p) => p.nombre)).toContain('Urubamba')
+    expect(provincias.every((p) => p.id.startsWith('08'))).toBe(true)
 
-    const distritos = await ubigeosService.distritos('Cusco', 'Urubamba')
-    expect(distritos.map((d) => d.distrito)).toContain('Machupicchu')
+    const distritos = await ubigeosService.distritos('0813')
+    expect(distritos.map((d) => d.nombre)).toContain('Machupicchu')
     expect(distritos.every((d) => d.id.startsWith('0813'))).toBe(true)
+  })
+
+  /*
+   * «Lima» es departamento, provincia y distrito. Si la cascada filtrara por
+   * nombre en vez de por id, la provincia de Lima traería distritos de tres
+   * sitios distintos; este es el caso que lo destapa.
+   */
+  it('no confunde los homónimos entre niveles', async () => {
+    const provinciasDeLima = await ubigeosService.provincias('15')
+    expect(provinciasDeLima.map((p) => p.nombre).sort()).toEqual(['Huaral', 'Lima'])
+
+    const distritosDeHuaral = await ubigeosService.distritos('1510')
+    expect(distritosDeHuaral.map((d) => d.nombre)).toEqual(['Chancay'])
   })
 
   it('no devuelve nada si falta el nivel de arriba', async () => {
     expect(await ubigeosService.provincias('')).toEqual([])
-    expect(await ubigeosService.distritos('Lima', '')).toEqual([])
+    expect(await ubigeosService.distritos('')).toEqual([])
+  })
+
+  it('une las tres tablas a partir del código del distrito', () => {
+    expect(ubigeosService.obtener('150122')).toEqual({
+      id: '150122',
+      departamento: 'Lima',
+      provincia: 'Lima',
+      distrito: 'Miraflores',
+    })
+    expect(ubigeosService.obtener('999999')).toBeUndefined()
   })
 })
 

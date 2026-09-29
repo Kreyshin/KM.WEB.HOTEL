@@ -1,4 +1,4 @@
-import type { Ubigeo } from '@/types'
+import type { Departamento, Distrito, Provincia, Ubigeo } from '@/types'
 import { db, latencia } from './mock/db'
 
 /**
@@ -7,36 +7,48 @@ import { db, latencia } from './mock/db'
  * Es un catálogo del núcleo y de solo lectura: nadie da de alta un distrito
  * desde el backoffice. Lo que sí hace falta es recorrerlo en el orden en que
  * lo recorre una persona —departamento, después provincia, después distrito—,
- * porque preguntar por el distrito de golpe obliga a elegir entre mil ochocientas
- * opciones y hay distritos con el mismo nombre en dos departamentos.
+ * porque preguntar por el distrito de golpe obliga a elegir entre mil
+ * ochocientas opciones y hay distritos homónimos en departamentos distintos.
+ *
+ * Cada nivel se pide por el **id** del de arriba, no por su nombre: «Lima» es
+ * departamento, provincia y distrito a la vez, así que filtrar por nombre
+ * devolvería cosas de tres sitios.
  */
 
-const porNombre = (a: string, b: string) => a.localeCompare(b, 'es')
+const porNombre = <T extends { nombre: string }>(a: T, b: T) =>
+  a.nombre.localeCompare(b.nombre, 'es')
 
 export const ubigeosService = {
-  async departamentos(): Promise<string[]> {
-    const nombres = [...new Set(db.ubigeos.map((u) => u.departamento))].sort(porNombre)
-    return latencia(nombres)
+  async departamentos(): Promise<Departamento[]> {
+    return latencia([...db.departamentos].sort(porNombre))
   },
 
-  async provincias(departamento: string): Promise<string[]> {
-    if (!departamento) return latencia([])
-    const nombres = [
-      ...new Set(db.ubigeos.filter((u) => u.departamento === departamento).map((u) => u.provincia)),
-    ].sort(porNombre)
-    return latencia(nombres)
-  },
-
-  async distritos(departamento: string, provincia: string): Promise<Ubigeo[]> {
-    if (!departamento || !provincia) return latencia([])
-    const items = db.ubigeos
-      .filter((u) => u.departamento === departamento && u.provincia === provincia)
-      .sort((a, b) => porNombre(a.distrito, b.distrito))
+  async provincias(departamentoId: string): Promise<Provincia[]> {
+    if (!departamentoId) return latencia([])
+    const items = db.provincias.filter((p) => p.departamentoId === departamentoId).sort(porNombre)
     return latencia(items)
   },
 
-  /** El ubigeo completo a partir del código guardado. Síncrono: se usa al resolver filas. */
+  async distritos(provinciaId: string): Promise<Distrito[]> {
+    if (!provinciaId) return latencia([])
+    const items = db.distritos.filter((d) => d.provinciaId === provinciaId).sort(porNombre)
+    return latencia(items)
+  },
+
+  /**
+   * Une las tres tablas para un código de distrito. Síncrono porque se usa al
+   * resolver filas, donde la latencia ya la pone la consulta que las trae.
+   */
   obtener(id?: string): Ubigeo | undefined {
-    return id ? db.ubigeos.find((u) => u.id === id) : undefined
+    const distrito = id ? db.distritos.find((d) => d.id === id) : undefined
+    if (!distrito) return undefined
+    const provincia = db.provincias.find((p) => p.id === distrito.provinciaId)
+    const departamento = db.departamentos.find((d) => d.id === provincia?.departamentoId)
+    return {
+      id: distrito.id,
+      departamento: departamento?.nombre ?? '',
+      provincia: provincia?.nombre ?? '',
+      distrito: distrito.nombre,
+    }
   },
 }

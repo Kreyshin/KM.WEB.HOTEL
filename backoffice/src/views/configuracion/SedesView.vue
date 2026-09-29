@@ -8,7 +8,7 @@ import KmNumero from '@/components/ui/KmNumero.vue'
 import KmSelect from '@/components/ui/KmSelect.vue'
 import { localesService } from '@/services/locales.service'
 import { ubigeosService } from '@/services/ubigeos.service'
-import type { LocalResuelto, NuevoLocal, Ubigeo } from '@/types'
+import type { Departamento, Distrito, LocalResuelto, NuevoLocal, Provincia } from '@/types'
 import type { ColumnaTabla, OpcionSelect } from '@/types/ui'
 
 /**
@@ -56,11 +56,13 @@ function validar(l: NuevoLocal): Record<string, string> {
  * cambiar uno se limpia lo que cuelga debajo, porque «Lima / Trujillo» no
  * existe y dejarlo a medias es peor que vaciarlo.
  */
-const departamentos = ref<string[]>([])
-const provincias = ref<string[]>([])
-const distritos = ref<Ubigeo[]>([])
+const departamentos = ref<Departamento[]>([])
+const provincias = ref<Provincia[]>([])
+const distritos = ref<Distrito[]>([])
 
-const seleccion = reactive({ departamento: '', provincia: '' })
+/* Se guardan los ids, no los nombres: «Lima» es departamento, provincia y
+   distrito a la vez, y por nombre la cascada traería cosas de tres sitios. */
+const seleccion = reactive({ departamentoId: '', provinciaId: '' })
 /** Evita que el reloj de la cascada borre el distrito mientras se está cargando una sede. */
 const cargandoUbigeo = ref(false)
 
@@ -69,19 +71,19 @@ onMounted(async () => {
 })
 
 watch(
-  () => seleccion.departamento,
-  async (dep) => {
-    provincias.value = await ubigeosService.provincias(dep)
+  () => seleccion.departamentoId,
+  async (id) => {
+    provincias.value = await ubigeosService.provincias(id)
     if (cargandoUbigeo.value) return
-    seleccion.provincia = ''
+    seleccion.provinciaId = ''
     distritos.value = []
   },
 )
 
 watch(
-  () => seleccion.provincia,
-  async (prov) => {
-    distritos.value = await ubigeosService.distritos(seleccion.departamento, prov)
+  () => seleccion.provinciaId,
+  async (id) => {
+    distritos.value = await ubigeosService.distritos(id)
   },
 )
 
@@ -90,23 +92,23 @@ watch(
  * hasta el departamento para que los tres combos aparezcan puestos.
  */
 async function sincronizar(ubigeoId?: string) {
-  const ubigeo = ubigeosService.obtener(ubigeoId)
   cargandoUbigeo.value = true
-  seleccion.departamento = ubigeo?.departamento ?? ''
-  provincias.value = await ubigeosService.provincias(seleccion.departamento)
-  seleccion.provincia = ubigeo?.provincia ?? ''
-  distritos.value = await ubigeosService.distritos(seleccion.departamento, seleccion.provincia)
+  // El código lleva dentro a sus padres: 150122 → provincia 1501 → departamento 15.
+  seleccion.departamentoId = ubigeoId?.slice(0, 2) ?? ''
+  provincias.value = await ubigeosService.provincias(seleccion.departamentoId)
+  seleccion.provinciaId = ubigeoId?.slice(0, 4) ?? ''
+  distritos.value = await ubigeosService.distritos(seleccion.provinciaId)
   cargandoUbigeo.value = false
 }
 
 const opDepartamentos = computed<OpcionSelect[]>(() =>
-  departamentos.value.map((d) => ({ valor: d, etiqueta: d })),
+  departamentos.value.map((d) => ({ valor: d.id, etiqueta: d.nombre })),
 )
 const opProvincias = computed<OpcionSelect[]>(() =>
-  provincias.value.map((p) => ({ valor: p, etiqueta: p })),
+  provincias.value.map((p) => ({ valor: p.id, etiqueta: p.nombre })),
 )
 const opDistritos = computed<OpcionSelect[]>(() =>
-  distritos.value.map((u) => ({ valor: u.id, etiqueta: `${u.distrito} · ${u.id}` })),
+  distritos.value.map((d) => ({ valor: d.id, etiqueta: `${d.nombre} · ${d.id}` })),
 )
 </script>
 
@@ -157,7 +159,7 @@ const opDistritos = computed<OpcionSelect[]>(() =>
         <KmField v-slot="{ id }" label="Departamento" requerido>
           <KmSelect
             :id="id"
-            v-model="seleccion.departamento"
+            v-model="seleccion.departamentoId"
             :opciones="opDepartamentos"
             placeholder="Elige un departamento"
           />
@@ -166,13 +168,13 @@ const opDistritos = computed<OpcionSelect[]>(() =>
           v-slot="{ id }"
           label="Provincia"
           requerido
-          :ayuda="seleccion.departamento ? undefined : 'Elige antes el departamento.'"
+          :ayuda="seleccion.departamentoId ? undefined : 'Elige antes el departamento.'"
         >
           <KmSelect
             :id="id"
-            v-model="seleccion.provincia"
+            v-model="seleccion.provinciaId"
             :opciones="opProvincias"
-            :disabled="!seleccion.departamento"
+            :disabled="!seleccion.departamentoId"
             placeholder="Elige una provincia"
           />
         </KmField>
@@ -189,7 +191,7 @@ const opDistritos = computed<OpcionSelect[]>(() =>
             :id="id"
             v-model="borrador.ubigeoId"
             :opciones="opDistritos"
-            :disabled="!seleccion.provincia"
+            :disabled="!seleccion.provinciaId"
             :invalido="invalido"
             placeholder="Elige un distrito"
           />
