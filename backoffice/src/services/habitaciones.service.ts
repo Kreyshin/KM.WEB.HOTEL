@@ -8,6 +8,7 @@ import type {
   Paginado,
   PisoConHabitaciones,
 } from '@/types'
+import { flag } from './configuracion.service'
 import { aplicarConsulta } from './mock/consulta'
 import { db, latencia, persistir } from './mock/db'
 import { errorCampo, existeOtro } from './mock/reglas'
@@ -195,6 +196,13 @@ export const habitacionesService = {
   async cambiarLimpieza(id: string, limpieza: EstadoLimpieza) {
     const habitacion = db.habitaciones.find((h) => h.id === id)
     if (!habitacion) throw { mensaje: 'Habitación no encontrada.' }
+
+    // Donde no se inspecciona, «a inspección» no es un estado posible: la
+    // habitación pasa de en limpieza a limpia y no hay nadie esperando detrás.
+    const localId = db.pisos.find((p) => p.id === habitacion.pisoId)?.localId
+    if (limpieza === 'inspeccion' && !flag('limpieza.requiereInspeccion', localId)) {
+      throw { mensaje: 'Esta sede no inspecciona la limpieza.' }
+    }
 
     const tarea = db.tareas.find((t) => t.habitacionId === id && t.estado !== 'terminada')
     if (tarea) {

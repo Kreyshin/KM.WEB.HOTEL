@@ -15,7 +15,11 @@ Cada paso se da desde el tablero de housekeeping o desde la propia tarjeta del t
 
 ## Sin inspección
 
-En las sedes donde el parámetro de inspección está desactivado, la camarera cierra directamente y la habitación queda limpia en un paso menos.
+En las sedes donde el parámetro de inspección está desactivado —se ajusta en [Configuración por sede](/modulos/configuracion)— la camarera cierra directamente y la habitación queda limpia en un paso menos.
+
+No es solo un atajo: la columna «por revisar» **desaparece del tablero**, y el estado «por inspeccionar» deja de ser alcanzable, también desde la ficha de la habitación. Una tarea esperando aprobación donde nadie aprueba es trabajo acabado que se queda colgado para siempre.
+
+Un hostal donde limpia y revisa la misma persona no gana nada con una parada que solo da un clic más a la misma mano; un hotel donde la gobernanta responde de lo que entrega no puede quitársela. Los dos tienen razón, y por eso es un parámetro de sede y no de la cadena.
 
 ## Lo que el ciclo no hace
 

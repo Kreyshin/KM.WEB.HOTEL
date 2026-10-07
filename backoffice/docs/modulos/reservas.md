@@ -159,6 +159,23 @@ Una reserva **pendiente** es la que aún no tiene garantía. Es la que puede cae
 
 El anticipo cobrado, si lo hay, aparece bajo la tarifa por noche.
 
+### Una pendiente retiene cupo, pero no para siempre
+
+Pasadas las **horas de garantía** de la cadena —24 por defecto, se ajusta en [Configuración de la vertical](/modulos/configuracion)— una reserva pendiente que no se confirmó ni dejó anticipo deja de contar contra la disponibilidad: su cupo vuelve a venderse.
+
+No es una limpieza de datos, es la regla comercial. El hotel no puede guardar indefinidamente una habitación por una promesa que nadie respaldó. Y al revés: una pendiente **con anticipo** retiene el cupo pase el tiempo que pase, porque el dinero en la mesa es la garantía y nadie suelta una habitación ya cobrada.
+
+## Sobreventa
+
+La disponibilidad de un hotel se cuenta **por tipo**, no por habitación: se vende «una doble», y qué doble concreta se decide al llegar. De ahí que haya dos comprobaciones distintas y las dos hagan falta:
+
+- Arrastrar una reserva encima de otra en el rack se rechaza siempre: eso es una doble venta en la misma puerta.
+- Vender cinco dobles cuando hay cuatro depende del parámetro **Permitir sobreventa**, apagado por defecto.
+
+Sobrevender es una decisión comercial legítima —se apuesta a las cancelaciones y se reubica al que sobra—, pero tiene que ser una decisión de la casa y no un descuido del mostrador. Por eso vive en un parámetro de la cadena, y no en el criterio de quien teclea.
+
+Con el parámetro apagado, el alta dice cuántas hay y que están todas vendidas. Alargar una reserva cuenta igual que un alta: estirar la salida también es vender noches.
+
 ## Cancelaciones y no-shows
 
 Ambas liberan la habitación que estuviera comprometida.

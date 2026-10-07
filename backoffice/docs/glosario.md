@@ -2,9 +2,11 @@
 
 El vocabulario del sistema, por orden alfabético.
 
-**ADR** — _Average Daily Rate_. Tarifa media por habitación ocupada. Pendiente de implementar.
+**ADR** — _Average Daily Rate_. Tarifa media por habitación ocupada. La congela el cierre de día.
 
 **Amenities** — El consumible de cortesía de la habitación: shampoo, jabón, gel.
+
+**Ámbito de un motivo** — Para qué sirve: cancelación, bloqueo, fuera de servicio, descuento o cortesía. No es una etiqueta, es lo que decide en qué desplegable aparece. No se cambia una vez creado.
 
 **Cobertura** — Preparación nocturna de la habitación con el huésped alojado. Doce minutos, típica de suites.
 
@@ -19,6 +21,8 @@ El vocabulario del sistema, por orden alfabético.
 **Fuera de servicio** — Habitación que no se puede usar por avería u obra. Sale del inventario vendible.
 
 **Gobernanta** — Responsable de pisos. Reparte el trabajo y valida la inspección.
+
+**Heredado / valor propio** — En la configuración por sede: heredado sigue a la cadena y se mueve con ella; valor propio se apartó a conciencia y se queda. Un valor igual al de la cadena no se guarda como propio.
 
 **Housekeeping** — El servicio de pisos y su tablero de tareas.
 
@@ -36,11 +40,11 @@ El vocabulario del sistema, por orden alfabético.
 
 **Régimen** — Qué comida incluye la tarifa: solo alojamiento, desayuno, media pensión o pensión completa.
 
-**RevPAR** — _Revenue per Available Room_. Ingreso por habitación disponible. Pendiente de implementar.
+**RevPAR** — _Revenue per Available Room_. Ingreso por habitación disponible, igual a ADR × ocupación. La congela el cierre de día.
 
 **Sede** — Un establecimiento de la cadena, con su horario y su código SUNAT.
 
-**Sobreventa** — Aceptar más reservas que habitaciones, contando con cancelaciones. Configurable por sede.
+**Sobreventa** — Aceptar más reservas de un tipo que habitaciones hay de él, contando con cancelaciones. Es un parámetro de la cadena, no de cada sede: apagado, el alta de reserva la rechaza.
 
 **Temporada** — Rango de fechas con un factor que multiplica la tarifa base.
 

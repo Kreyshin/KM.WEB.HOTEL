@@ -27,7 +27,6 @@ import type {
 import type { OpcionSelect } from '@/types/ui'
 import { desdeHace } from '@/utils/formato'
 import {
-  estadosTarea,
   etiquetaLimpieza,
   etiquetaPrioridad,
   etiquetaTarea,
@@ -95,8 +94,15 @@ function sustituir(t: TareaResuelta) {
 
 const peso = { urgente: 0, alta: 1, normal: 2 } as const
 
+/*
+ * Las columnas son las fases que usa **esta** sede. Donde no se inspecciona no
+ * aparece «por revisar»: una columna que nadie puede vaciar no es información,
+ * es un sitio donde el trabajo se queda quieto.
+ */
+const fases = computed(() => limpiezaService.fases(localStore.localId ?? undefined))
+
 const columnas = computed(() =>
-  estadosTarea.map((estado) => ({
+  fases.value.map((estado) => ({
     estado,
     tareas: tareas.value
       .filter((t) => t.estado === estado)
@@ -152,9 +158,8 @@ const opcionesHabitacion = computed<OpcionSelect[]>(() =>
 
 // ── Mover de fase ──────────────────────────────────────────────────────────
 
-const orden = estadosTarea
-const siguienteDe = (e: EstadoTarea) => orden[orden.indexOf(e) + 1]
-const anteriorDe = (e: EstadoTarea) => orden[orden.indexOf(e) - 1]
+const siguienteDe = (e: EstadoTarea) => fases.value[fases.value.indexOf(e) + 1]
+const anteriorDe = (e: EstadoTarea) => fases.value[fases.value.indexOf(e) - 1]
 
 async function mover(t: TareaResuelta, destino?: EstadoTarea) {
   if (!destino || destino === t.estado || ocupadas.value.has(t.id)) return

@@ -1,8 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { configuracionService } from './configuracion.service'
 import { habitacionesService } from './habitaciones.service'
 import { limpiezaService } from './limpieza.service'
-import { reservasService } from './reservas.service'
+import { garantiaVencida, recargoSalidaTardia, reservasService } from './reservas.service'
 import { db, reiniciarMock } from './mock/db'
+import type { Reserva } from '@/types'
 
 /**
  * El ciclo central de la vertical: habitación → reserva → estancia → tarea de
@@ -281,5 +283,136 @@ describe('reprogramar', () => {
     expect(movida.habitacionId).toBe(libre.id)
     expect(movida.entrada).toBe(sumar(entradaOriginal, 1))
     expect(movida.salida).toBe(sumar(salidaOriginal, 1))
+  })
+})
+
+/**
+ * Las políticas configurables, probadas desde el servicio.
+ *
+ * Son parámetros que alguien cambia en una pantalla de configuración, y la
+ * única forma de que esa pantalla signifique algo es que estas reglas lean el
+ * valor de verdad. Lo que se comprueba es justo eso: el mismo gesto da un
+ * resultado distinto según lo que diga la configuración.
+ */
+describe('sobreventa y garantía', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    reiniciarMock()
+  })
+
+  const ENTRADA = '2099-03-01'
+  const SALIDA = '2099-03-03'
+
+  /** Una reserva más del tipo t2 en la sede l1, sin habitación asignada. */
+  const unaMas = (estado: Reserva['estado'] = 'confirmada') => ({
+    localId: 'l1',
+    huespedId: 'g1',
+    tipoId: 't2',
+    entrada: ENTRADA,
+    salida: SALIDA,
+    adultos: 1,
+    ninos: 0,
+    canal: 'directo',
+    estado,
+    regimen: 'desayuno' as const,
+    tarifaNoche: 200,
+  })
+
+  it('no vende más habitaciones de un tipo que las que hay', async () => {
+    const { libres } = await reservasService.cupo('l1', 't2', ENTRADA, SALIDA)
+    expect(libres).toBeGreaterThan(0)
+
+    // Se llena el tipo hasta la última habitación.
+    for (let i = 0; i < libres; i++) await reservasService.crear(unaMas())
+
+    await expect(reservasService.crear(unaMas())).rejects.toMatchObject({
+      campos: { tipoId: 'Sin disponibilidad' },
+    })
+  })
+
+  it('con sobreventa permitida, la misma venta se acepta', async () => {
+    const { libres } = await reservasService.cupo('l1', 't2', ENTRADA, SALIDA)
+    for (let i = 0; i < libres; i++) await reservasService.crear(unaMas())
+
+    await configuracionService.guardarVertical({ 'reserva.permitirSobreventa': true })
+    const extra = await reservasService.crear(unaMas())
+    expect(extra.id).toBeTruthy()
+  })
+
+  it('una pendiente sin confirmar ni anticipo suelta el cupo al vencer la garantía', async () => {
+    const antes = await reservasService.cupo('l1', 't2', ENTRADA, SALIDA)
+    const pendiente = await reservasService.crear(unaMas('pendiente'))
+    expect((await reservasService.cupo('l1', 't2', ENTRADA, SALIDA)).libres).toBe(antes.libres - 1)
+
+    // Se envejece la reserva más allá de las 24 h de garantía de la semilla.
+    db.reservas.find((r) => r.id === pendiente.id)!.creada = new Date(
+      Date.now() - 48 * 3_600_000,
+    ).toISOString()
+    expect((await reservasService.cupo('l1', 't2', ENTRADA, SALIDA)).libres).toBe(antes.libres)
+
+    // Con la garantía a cero, una pendiente no retiene nada desde el primer momento.
+    await configuracionService.guardarVertical({ 'reserva.garantiaHoras': 0 })
+    const reciente = await reservasService.crear(unaMas('pendiente'))
+    expect(garantiaVencida(db.reservas.find((r) => r.id === reciente.id)!)).toBe(true)
+  })
+
+  it('una pendiente con anticipo retiene el cupo pase el tiempo que pase', async () => {
+    const pendiente = await reservasService.crear({ ...unaMas('pendiente'), anticipo: 200 })
+    const fila = db.reservas.find((r) => r.id === pendiente.id)!
+    fila.creada = new Date(Date.now() - 365 * 24 * 3_600_000).toISOString()
+    // El dinero en la mesa es la garantía: nadie suelta una habitación ya cobrada.
+    expect(garantiaVencida(fila)).toBe(false)
+  })
+})
+
+describe('salida tardía', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    reiniciarMock()
+  })
+
+  afterEach(() => vi.useRealTimers())
+
+  /** r1 está enCasa en l1, cuya hora de salida es la de la semilla. */
+  const enCasa = () => db.reservas.find((r) => r.id === 'r1')!
+  const horaSalida = () => db.locales.find((l) => l.id === 'l1')!.horaCheckOut
+
+  /** Un `Date` de hoy a la hora pedida. */
+  const aLas = (hhmm: string) => new Date(`${new Date().toISOString().slice(0, 10)}T${hhmm}:00`)
+
+  const masMinutos = (hhmm: string, minutos: number) => {
+    const [h, m] = hhmm.split(':').map(Number)
+    const total = h! * 60 + m! + minutos
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+  }
+
+  it('dentro de la cortesía no se cobra nada', () => {
+    // 30 minutos de cortesía en la semilla: justo en el límite no hay recargo.
+    expect(recargoSalidaTardia(enCasa(), aLas(masMinutos(horaSalida(), 30)))).toBeUndefined()
+  })
+
+  it('pasada la cortesía cobra el porcentaje de la noche', () => {
+    const recargo = recargoSalidaTardia(enCasa(), aLas(masMinutos(horaSalida(), 31)))
+    // 50 % de los 260 de r1.
+    expect(recargo?.importe).toBe(130)
+  })
+
+  it('la sede que no cobra salida tardía no cobra nada', async () => {
+    await configuracionService.guardarLocal('l1', { 'checkout.cobrarSalidaTardia': false })
+    expect(recargoSalidaTardia(enCasa(), aLas(masMinutos(horaSalida(), 120)))).toBeUndefined()
+  })
+
+  it('el recargo entra en los consumos de la estancia, que es lo que suma el cierre', async () => {
+    const estanciaAntes = db.estancias.find((e) => e.reservaId === 'r1' && !e.checkOut)!
+    const consumosAntes = estanciaAntes.consumos
+
+    // El reloj se mueve igual: el mock simula latencia con temporizadores y sin
+    // esto el check-out se quedaría esperando un `setTimeout` congelado.
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    vi.setSystemTime(aLas(masMinutos(horaSalida(), 90)))
+    const { recargo } = await reservasService.checkOut('r1')
+
+    expect(recargo).toBe(130)
+    expect(db.estancias.find((e) => e.id === estanciaAntes.id)?.consumos).toBe(consumosAntes + 130)
   })
 })

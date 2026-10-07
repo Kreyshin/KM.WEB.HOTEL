@@ -210,8 +210,12 @@ async function cerrarEstancia(h: HabitacionResuelta) {
     return
   }
   try {
-    await reservasService.checkOut(reserva.id)
-    ui.exito(`Check-out de la ${h.numero} hecho. Housekeeping ya tiene la tarea.`)
+    const { recargo } = await reservasService.checkOut(reserva.id)
+    ui.exito(
+      recargo
+        ? `Check-out de la ${h.numero} con S/ ${recargo.toFixed(2)} de salida tardía.`
+        : `Check-out de la ${h.numero} hecho. Housekeeping ya tiene la tarea.`,
+    )
     await cargar(true)
   } catch (e) {
     ui.error((e as { mensaje?: string }).mensaje ?? 'No se pudo cerrar la estancia.')

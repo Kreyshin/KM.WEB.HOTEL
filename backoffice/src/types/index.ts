@@ -601,13 +601,35 @@ export interface RegistroAuditoria {
   fecha: string
 }
 
+/**
+ * Para qué se usa un motivo. No es una etiqueta: decide en qué desplegable
+ * aparece, y por eso un motivo de cancelación no puede ofrecerse al bloquear
+ * una habitación.
+ */
+export type AmbitoMotivo = 'cancelacion' | 'bloqueo' | 'descuento' | 'cortesia' | 'fueraServicio'
+
+/**
+ * Motivo tipificado.
+ *
+ * Existe para que «por qué» deje de ser texto libre. Un hotel que escribe el
+ * motivo a mano no puede contar cuántas cancelaciones fueron sobreventa, y esa
+ * cuenta es justo la que dice si el problema es del canal o del mostrador.
+ */
 export interface Motivo {
   id: string
   nombre: string
-  ambito: 'cancelacion' | 'bloqueo' | 'descuento' | 'cortesia' | 'fueraServicio'
+  ambito: AmbitoMotivo
+  /**
+   * Obliga a escribir una explicación además de elegir el motivo.
+   *
+   * Se reserva a lo que alguien tendrá que justificar después: una cortesía
+   * sin nota es un descuadre sin autor.
+   */
   requiereNota: boolean
   activo: boolean
 }
+
+export type NuevoMotivo = Omit<Motivo, 'id'>
 
 // ── Configuración de la vertical ─────────────────────────────────────────────
 
@@ -622,7 +644,20 @@ export interface DefinicionParametro {
   grupo: string
   tipo: 'booleano' | 'numero' | 'texto' | 'opcion'
   opciones?: { valor: string; etiqueta: string }[]
-  porDefecto: string | number | boolean
+  porDefecto: ValorParametro
+  /** Límites de un parámetro numérico. Fuera de ellos el valor se rechaza. */
+  minimo?: number
+  maximo?: number
+  /** Unidad que se pinta dentro del control: `%`, `min`, `h`. */
+  sufijo?: string
+  /**
+   * Dónde manda este parámetro, en una frase.
+   *
+   * No es documentación de adorno: un parámetro cuyo efecto no se sabe nombrar
+   * no se puede cambiar con criterio, y acaba siendo un interruptor que nadie
+   * toca por miedo.
+   */
+  efecto: string
 }
 
 export type ValorParametro = string | number | boolean

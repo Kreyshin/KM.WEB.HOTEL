@@ -195,7 +195,7 @@ export const modulos: ModuloNav[] = [
       {
         nombreRuta: 'config-local',
         etiqueta: 'Configuración por sede',
-        descripcion: 'Horas de check-in, salida y políticas',
+        descripcion: 'Lo que esta sede hace distinto',
         roles: ['admin'],
       },
       {

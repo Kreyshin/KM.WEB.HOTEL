@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { configuracionService } from './configuracion.service'
+import { habitacionesService } from './habitaciones.service'
 import { limpiezaService } from './limpieza.service'
 import { db, reiniciarMock } from './mock/db'
 
@@ -89,5 +91,50 @@ describe('limpiezaService', () => {
     await limpiezaService.cambiarEstado(tarea.id, 'terminada')
 
     expect(db.habitaciones.find((h) => h.id === fuera.id)?.limpieza).toBe('fueraServicio')
+  })
+})
+
+/**
+ * La inspección, que no todas las casas hacen.
+ *
+ * Es el parámetro por sede más visible de la vertical: cambia las columnas
+ * del tablero y el número de manos por las que pasa una habitación. En la
+ * semilla, l1 inspecciona y l2 no, y las dos tienen razón.
+ */
+describe('fases según la sede', () => {
+  const sedeDeTarea = (habitacionId: string) => {
+    const habitacion = db.habitaciones.find((h) => h.id === habitacionId)!
+    return db.pisos.find((p) => p.id === habitacion.pisoId)!.localId
+  }
+
+  it('donde se inspecciona hay cuatro fases, y donde no, tres', () => {
+    expect(limpiezaService.fases('l1')).toEqual(['pendiente', 'enCurso', 'revisar', 'terminada'])
+    expect(limpiezaService.fases('l2')).toEqual(['pendiente', 'enCurso', 'terminada'])
+  })
+
+  it('no admite «por revisar» en una sede que no inspecciona', async () => {
+    const tarea = db.tareas[0]!
+    const sede = sedeDeTarea(tarea.habitacionId)
+    expect(sede).toBe(LOCAL)
+
+    // Con la inspección puesta, la fase existe.
+    await limpiezaService.cambiarEstado(tarea.id, 'revisar')
+    expect(db.habitaciones.find((h) => h.id === tarea.habitacionId)?.limpieza).toBe('inspeccion')
+
+    // Quitada, la misma llamada se rechaza: una tarea «a revisar» sin nadie que
+    // la apruebe es trabajo acabado que se queda colgado para siempre.
+    await configuracionService.guardarLocal(LOCAL, { 'limpieza.requiereInspeccion': false })
+    await expect(limpiezaService.cambiarEstado(tarea.id, 'revisar')).rejects.toMatchObject({
+      mensaje: expect.stringContaining('no inspecciona'),
+    })
+  })
+
+  it('tampoco deja poner la habitación «a inspección» por el otro camino', async () => {
+    await configuracionService.guardarLocal(LOCAL, { 'limpieza.requiereInspeccion': false })
+    const habitacion = db.habitaciones.find((h) => sedeDeTarea(h.id) === LOCAL)!
+
+    await expect(
+      habitacionesService.cambiarLimpieza(habitacion.id, 'inspeccion'),
+    ).rejects.toMatchObject({ mensaje: expect.stringContaining('no inspecciona') })
   })
 })

@@ -105,8 +105,14 @@ async function confirmarCheckIn() {
 
 async function hacerCheckOut(reserva: ReservaResuelta) {
   try {
-    await reservasService.checkOut(reserva.id)
-    ui.exito('Check-out hecho. La tarea de limpieza ya está en housekeeping.')
+    const { recargo } = await reservasService.checkOut(reserva.id)
+    // El recargo se dice en voz alta: un cargo que aparece después en la
+    // factura y nadie anunció es una reclamación en la puerta.
+    ui.exito(
+      recargo
+        ? `Check-out hecho con S/ ${recargo.toFixed(2)} de salida tardía. La tarea ya está en housekeeping.`
+        : 'Check-out hecho. La tarea de limpieza ya está en housekeeping.',
+    )
     await cargar()
   } catch (e) {
     ui.error((e as { mensaje?: string }).mensaje ?? 'No se pudo cerrar la estancia.')

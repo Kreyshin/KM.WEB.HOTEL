@@ -168,13 +168,13 @@ const rutas: RouteRecordRaw[] = [
       {
         path: 'configuracion/vertical',
         name: 'config-vertical',
-        component: () => import('@/views/EnConstruccionView.vue'),
+        component: () => import('@/views/configuracion/ConfigVerticalView.vue'),
         meta: { titulo: 'Configuración de la vertical', roles: ['admin'] },
       },
       {
         path: 'configuracion/sede',
         name: 'config-local',
-        component: () => import('@/views/EnConstruccionView.vue'),
+        component: () => import('@/views/configuracion/ConfigLocalView.vue'),
         meta: { titulo: 'Configuración por sede', roles: ['admin'] },
       },
       {
@@ -192,7 +192,7 @@ const rutas: RouteRecordRaw[] = [
       {
         path: 'configuracion/motivos',
         name: 'config-motivos',
-        component: () => import('@/views/EnConstruccionView.vue'),
+        component: () => import('@/views/configuracion/MotivosView.vue'),
         meta: { titulo: 'Motivos', roles: ['admin'] },
       },
       {

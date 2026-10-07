@@ -1,4 +1,5 @@
 import type { CanalReserva, NuevaTemporada, TarifaCanal, Temporada } from '@/types'
+import { numero } from './configuracion.service'
 import { db, latencia } from './mock/db'
 import { errorCampo } from './mock/reglas'
 import { crearRepositorio } from './mock/repositorio'
@@ -60,7 +61,7 @@ export function resolverTarifa(tipoId: string, fecha: string, canal: CanalReserv
   const ajuste = propia?.ajuste ?? canalVenta?.ajuste ?? 0
   const bruto = tipo.tarifaBase * factor * (1 + ajuste / 100)
 
-  const paso = Number(db.configuracion.vertical['tarifa.redondearA'] ?? 1) || 1
+  const paso = numero('tarifa.redondearA') || 1
   return {
     base: tipo.tarifaBase,
     factor,

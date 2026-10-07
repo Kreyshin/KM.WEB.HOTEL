@@ -8,6 +8,7 @@ import type {
   ReservaResuelta,
 } from '@/types'
 import { noches } from '@/utils/formato'
+import { flag, numero } from './configuracion.service'
 import { db, latencia, nuevoId, persistir } from './mock/db'
 import { errorCampo } from './mock/reglas'
 import { crearRepositorio } from './mock/repositorio'
@@ -32,6 +33,125 @@ function resolver(r: Reserva): ReservaResuelta {
 function nuevoCodigo() {
   const numero = 2400 + db.reservas.length + 1
   return `KMH-${numero}`
+}
+
+/**
+ * Una reserva pendiente retiene cupo, pero no para siempre.
+ *
+ * Pasada la ventana de garantía sin confirmarse ni dejar anticipo, deja de
+ * contar contra la disponibilidad: el hotel no puede guardar indefinidamente
+ * una habitación por una promesa que nadie respaldó. Es lo que configura
+ * `reserva.garantiaHoras`, y poner 0 significa que una pendiente no retiene
+ * nada.
+ */
+export function garantiaVencida(reserva: Reserva, ahora = Date.now()): boolean {
+  if (reserva.estado !== 'pendiente') return false
+  if (reserva.anticipo) return false
+  const horas = numero('reserva.garantiaHoras')
+  return ahora - new Date(reserva.creada).getTime() > horas * 3_600_000
+}
+
+/**
+ * Cuántas habitaciones de un tipo hay y cuántas están ya vendidas esas noches.
+ *
+ * La disponibilidad de un hotel se cuenta **por tipo**, no por habitación: se
+ * vende «una doble», y qué doble concreta se decide al llegar. Por eso la
+ * comprobación de solape de `reasignar` no sirve aquí: esa impide dos
+ * reservas en la misma puerta, y esta impide vender cinco dobles cuando hay
+ * cuatro.
+ */
+export function cupoDelTipo(
+  localId: string,
+  tipoId: string,
+  entrada: string,
+  salida: string,
+  excluirId?: string,
+) {
+  const pisos = db.pisos.filter((p) => p.localId === localId).map((p) => p.id)
+  const habitaciones = db.habitaciones.filter(
+    (h) =>
+      pisos.includes(h.pisoId) &&
+      h.tipoId === tipoId &&
+      h.limpieza !== 'fueraServicio' &&
+      h.ocupacion !== 'bloqueada',
+  ).length
+
+  const vendidas = db.reservas.filter(
+    (r) =>
+      r.id !== excluirId &&
+      r.localId === localId &&
+      r.tipoId === tipoId &&
+      !['cancelada', 'noShow', 'salida'].includes(r.estado) &&
+      r.entrada < salida &&
+      r.salida > entrada &&
+      !garantiaVencida(r),
+  ).length
+
+  return { habitaciones, vendidas, libres: habitaciones - vendidas }
+}
+
+/** Minutos transcurridos del día en un `HH:mm`. */
+const minutosDelDia = (hhmm: string) => {
+  const [h, m] = hhmm.split(':')
+  return Number(h) * 60 + Number(m ?? 0)
+}
+
+/**
+ * El recargo por irse pasada la hora, con el detalle de por qué.
+ *
+ * Tres parámetros de sede deciden aquí: si se cobra, cuánta cortesía se da
+ * antes de empezar a contar y qué parte de la noche se carga. La cortesía no
+ * es generosidad: sin ella, un ascensor lento convierte una salida normal en
+ * una discusión en el mostrador.
+ *
+ * Compara **hora del día**, así que solo cubre al que se va tarde el mismo
+ * día. Quien se queda a dormir otra noche no es una salida tardía: es una
+ * noche más, y eso lo resuelve el cierre de día cobrando la estancia.
+ */
+export function recargoSalidaTardia(reserva: Reserva, salida = new Date()) {
+  const sede = db.locales.find((l) => l.id === reserva.localId)
+  if (!sede || !flag('checkout.cobrarSalidaTardia', reserva.localId)) return undefined
+
+  const tolerancia = numero('checkout.toleranciaSalidaMinutos', reserva.localId)
+  const limite = minutosDelDia(sede.horaCheckOut) + tolerancia
+  const minutos = salida.getHours() * 60 + salida.getMinutes()
+  if (minutos <= limite) return undefined
+
+  const porcentaje = numero('checkout.salidaTardiaPorcentaje', reserva.localId)
+  const importe = Math.round(reserva.tarifaNoche * (porcentaje / 100) * 100) / 100
+  if (importe <= 0) return undefined
+
+  return { importe, porcentaje, limite: sede.horaCheckOut, tolerancia }
+}
+
+/**
+ * Rechaza la venta que no cabe, salvo que la casa acepte sobrevender.
+ *
+ * Sobrevender es una decisión comercial legítima —se apuesta a las
+ * cancelaciones y se reubica al que sobra—, pero tiene que ser una decisión,
+ * no un descuido del mostrador. De ahí que viva en un parámetro de la cadena
+ * y no en el criterio de quien teclea.
+ */
+function comprobarCupo(datos: Partial<NuevaReserva>, excluirId?: string) {
+  if (flag('reserva.permitirSobreventa')) return
+  const { localId, tipoId, entrada, salida } = datos
+  if (!localId || !tipoId || !entrada || !salida) return
+
+  const { habitaciones, libres } = cupoDelTipo(localId, tipoId, entrada, salida, excluirId)
+  /*
+   * Un tipo sin ninguna habitación en la sede no es sobreventa: es un
+   * catálogo a medio montar, y de eso avisa el alta de habitaciones. Bloquear
+   * la venta aquí diría «están todas vendidas» de un inventario vacío.
+   */
+  if (habitaciones === 0) return
+  if (libres <= 0) {
+    const tipo = db.tiposHabitacion.find((t) => t.id === tipoId)
+    throw errorCampo(
+      'tipoId',
+      `No quedan ${tipo?.nombre ?? 'habitaciones'} libres del ${entrada} al ${salida}: las ${habitaciones} están vendidas.`,
+      'Sin disponibilidad',
+    )
+  }
 }
 
 function validar(datos: Partial<NuevaReserva>) {
@@ -107,8 +227,19 @@ export const reservasService = {
     return latencia(items.map(resolver))
   },
 
+  /**
+   * Cuántas habitaciones del tipo quedan para esas noches.
+   *
+   * El mostrador lo pregunta antes de prometer: saber que quedan dos dobles
+   * es lo que separa vender de sobrevender sin querer.
+   */
+  async cupo(localId: string, tipoId: string, entrada: string, salida: string, excluirId?: string) {
+    return latencia(cupoDelTipo(localId, tipoId, entrada, salida, excluirId))
+  },
+
   async crear(datos: NuevaReserva): Promise<Reserva> {
     validar(datos)
+    comprobarCupo(datos)
     const reserva = await repo.crear({
       ...datos,
       codigo: nuevoCodigo(),
@@ -125,6 +256,8 @@ export const reservasService = {
   async actualizar(id: string, datos: Partial<NuevaReserva>): Promise<Reserva> {
     const actual = db.reservas.find((r) => r.id === id)
     validar({ ...actual, ...datos })
+    // Se excluye a sí misma del recuento: una reserva no compite con su propio cupo.
+    comprobarCupo({ ...actual, ...datos }, id)
     return repo.actualizar(id, datos)
   },
 
@@ -278,6 +411,9 @@ export const reservasService = {
       }
     }
 
+    // Estirar una reserva también es vender noches: cuentan igual que un alta.
+    comprobarCupo({ localId: reserva.localId, tipoId: reserva.tipoId, entrada, salida }, reservaId)
+
     if (habitacionId) {
       const destino = db.habitaciones.find((h) => h.id === habitacionId)
       if (!destino) throw { mensaje: 'Habitación no encontrada.' }
@@ -357,7 +493,7 @@ export const reservasService = {
    * Check-out: libera la habitación, la deja sucia y abre la tarea de salida.
    * Esa tarea es el enlace real entre recepción y housekeeping.
    */
-  async checkOut(reservaId: string): Promise<void> {
+  async checkOut(reservaId: string): Promise<{ recargo?: number }> {
     const reserva = db.reservas.find((r) => r.id === reservaId)
     if (!reserva) throw { mensaje: 'Reserva no encontrada.' }
     if (reserva.estado !== 'enCasa') throw { mensaje: 'La reserva no tiene una estancia en curso.' }
@@ -365,9 +501,17 @@ export const reservasService = {
     const estancia = db.estancias.find((e) => e.reservaId === reservaId && !e.checkOut)
     const habitacion = db.habitaciones.find((h) => h.id === reserva.habitacionId)
 
+    /*
+     * El recargo se carga a los consumos de la estancia, no a una cuenta
+     * aparte: así entra en la producción que suma el cierre de día sin que
+     * haya que acordarse de añadirlo en ningún otro sitio.
+     */
+    const ahora = new Date()
+    const recargo = recargoSalidaTardia(reserva, ahora)
     if (estancia) {
-      estancia.checkOut = new Date().toISOString()
+      estancia.checkOut = ahora.toISOString()
       estancia.nochesConsumidas = noches(reserva.entrada, reserva.salida)
+      if (recargo) estancia.consumos += recargo.importe
     }
     reserva.estado = 'salida'
 
@@ -393,6 +537,7 @@ export const reservasService = {
 
     persistir()
     await latencia(null)
+    return { recargo: recargo?.importe }
   },
 
   /** Cancelación y no-show liberan la habitación comprometida, si la había. */

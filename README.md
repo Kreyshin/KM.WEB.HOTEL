@@ -135,4 +135,8 @@ El tamaño de los controles no es una constante del kit: lo pone la postura desd
 | Amenities, lencería y movimientos | ✅ |
 | Rejilla de tarifas y temporadas | ✅ |
 | Usuarios, roles y sedes | ✅ |
-| Canales y OTA, reportes, facturación SUNAT, bitácora, motivos | 🚧 Ruta y permisos listos, vista pendiente |
+| Comprobantes, series e impuestos | ✅ |
+| Canales y OTA | ✅ |
+| Cierre de día y night audit | ✅ |
+| Configuración de la vertical, por sede y motivos | ✅ |
+| Reportes, facturación SUNAT, bitácora | 🚧 Ruta y permisos listos, vista pendiente |

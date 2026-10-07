@@ -6,7 +6,8 @@ import type {
   TareaLimpieza,
   TareaResuelta,
 } from '@/types'
-import { minutosPorTipo } from '@/utils/habitaciones'
+import { estadosTarea, minutosPorTipo } from '@/utils/habitaciones'
+import { flag } from './configuracion.service'
 import { errorCampo } from './mock/reglas'
 import { db, latencia, persistir } from './mock/db'
 import { crearRepositorio } from './mock/repositorio'
@@ -36,8 +37,27 @@ const limpiezaSegunTarea = {
   terminada: 'limpia',
 } as const
 
+/** En qué sede está el trabajo: la habitación lo dice a través de su piso. */
+function sedeDe(tarea: TareaLimpieza): string | undefined {
+  const habitacion = db.habitaciones.find((h) => h.id === tarea.habitacionId)
+  return db.pisos.find((p) => p.id === habitacion?.pisoId)?.localId
+}
+
 export const limpiezaService = {
   ...repo,
+
+  /**
+   * Las fases por las que pasa el trabajo en esta sede.
+   *
+   * Son cuatro o tres según si la casa inspecciona. Un hostal donde limpia y
+   * revisa la misma persona no gana nada con una columna «por revisar» que
+   * solo sirve para dar un clic más a la misma mano; un hotel donde la
+   * gobernanta responde de lo que entrega no puede quitársela.
+   */
+  fases(localId?: string): EstadoTarea[] {
+    if (flag('limpieza.requiereInspeccion', localId)) return [...estadosTarea]
+    return estadosTarea.filter((e) => e !== 'revisar')
+  },
 
   async consultarResueltas(consulta?: Consulta): Promise<Paginado<TareaResuelta>> {
     const { items, ...resto } = await repo.consultar(consulta)
@@ -155,6 +175,17 @@ export const limpiezaService = {
   async cambiarEstado(id: string, estado: EstadoTarea): Promise<TareaResuelta> {
     const tarea = db.tareas.find((t) => t.id === id)
     if (!tarea) throw { mensaje: 'Tarea no encontrada.' }
+
+    /*
+     * La fase que la sede no usa no se alcanza ni por error. Dejar entrar un
+     * «por revisar» donde nadie inspecciona crearía una tarea que no tiene
+     * quién la apruebe: trabajo acabado que se queda colgado para siempre.
+     */
+    if (estado === 'revisar' && !flag('limpieza.requiereInspeccion', sedeDe(tarea))) {
+      throw {
+        mensaje: 'Esta sede no inspecciona la limpieza: la tarea se entrega directamente.',
+      }
+    }
 
     const habitacion = db.habitaciones.find((h) => h.id === tarea.habitacionId)
     if (habitacion && habitacion.limpieza !== 'fueraServicio') {

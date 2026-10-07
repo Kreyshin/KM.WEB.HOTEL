@@ -45,23 +45,65 @@ Una sede nace activa, igual que un piso nace en servicio y una cuenta nace pudie
 
 ## Configuración de la vertical y por sede
 
-Los parámetros tienen dos alcances: los de **vertical** valen para toda la cadena; los de **sede** los sobrescriben en un establecimiento concreto.
+Son dos pantallas y un solo mecanismo. La de **vertical** fija cómo se comporta la cadena; la de **sede** recoge lo que un establecimiento hace distinto.
 
-| Parámetro            | Qué decide                                           |
-| -------------------- | ---------------------------------------------------- |
-| Horas de garantía    | Cuánto aguanta una reserva pendiente antes de caerse |
-| Permitir sobreventa  | Si se aceptan más reservas que habitaciones          |
-| Cobrar salida tardía | Si pasarse de la hora genera cargo                   |
-| Requiere inspección  | Si la gobernanta valida antes de dar por limpia      |
-| Redondear tarifa a   | El múltiplo al que se ajusta el precio final         |
+La regla que las ordena es el **alcance** de cada parámetro:
 
-El ejemplo típico: la sede grande exige inspección de gobernanta; la pequeña no tiene a nadie para ese paso y la desactiva.
+- **De la cadena** — no se discute por sede. Tenerlo distinto en dos hoteles haría incomparables sus cifras, y comparar es para lo que existe el [cierre de día](/procesos/cierre-dia). La pantalla de sede ni los ofrece, y el servicio los rechaza si se intentan.
+- **Ajustable por sede** — la vertical fija el valor común del que todas parten, y cada una puede apartarse.
+
+| Parámetro                                   | Alcance | Dónde manda                                                              |
+| ------------------------------------------- | ------- | ------------------------------------------------------------------------ |
+| Permitir sobreventa                         | Cadena  | El alta de reserva se rechaza cuando el tipo ya está vendido esas noches |
+| Horas que aguanta una reserva sin confirmar | Cadena  | Pasadas, la pendiente sin anticipo suelta el cupo y vuelve a venderse    |
+| Redondear la tarifa a múltiplos de          | Cadena  | El precio resuelto de cada noche, el que se ofrece y se factura          |
+| La limpieza pasa por inspección             | Sede    | Si el tablero de pisos tiene la columna «por revisar»                    |
+| Cobrar la salida tardía                     | Sede    | Si el check-out fuera de hora carga recargo                              |
+| Cortesía antes de cobrar                    | Sede    | Minutos de gracia tras la hora de salida de la sede                      |
+| Cuánto se cobra                             | Sede    | Porcentaje de la tarifa de la noche que se carga por salir tarde         |
+
+Ningún parámetro está ahí de adorno: cada uno declara en qué parte del programa manda, y la pantalla lo escribe debajo del control. Un interruptor cuyo efecto no se sabe nombrar acaba siendo uno que nadie toca por miedo.
+
+### Heredado o propio
+
+Toda la pantalla de sede gira alrededor de esa distinción:
+
+- **Heredado** — la sede sigue a la cadena, y se moverá con ella el día que la cadena cambie.
+- **Valor propio** — se apartó a conciencia, y se queda donde está. La pantalla dice además de qué se apartó: «la cadena usa 30 min».
+
+Volver a heredar no es «restablecer por defecto»: es dejar de ser la excepción, y tiene su propio botón en cada parámetro apartado.
+
+::: tip Un valor igual al de la cadena no se guarda como propio
+Si se escribe en la sede exactamente lo que ya dice la cadena, no se registra ninguna excepción: el campo vuelve a decir «heredado». Y al mover el valor común, las sedes que tenían ese mismo número propio lo sueltan.
+
+Un registro así sería invisible y mentiroso: hoy coincide, y el día que la cadena se mueva dejaría a esa sede anclada al valor anterior sin que nadie lo haya decidido. Es la diferencia entre «esto está así porque alguien lo decidió» y «porque nadie lo tocó».
+:::
+
+Por eso la pantalla de vertical avisa a quién **no** va a afectar un cambio: «No afecta a Alba Barranco: usa un valor propio».
+
+### Lo que no se edita aquí
+
+El nombre, la dirección y las horas de entrada y salida de la sede son su ficha, y viven en **Sedes**. Dos sitios para cambiar la hora de salida son dos sitios donde dejarla distinta.
+
+La configuración por sede los enseña de solo lectura, porque la hora de salida es justo la que usa el recargo por salida tardía y conviene tenerla delante al decidir la cortesía.
 
 ## Motivos
 
-Las razones que el personal elige para dejar rastro: cancelación, bloqueo, descuento, cortesía y baja de servicio. Algunos exigen una nota escrita.
+Las razones que el personal elige para dejar rastro, agrupadas por **ámbito**: cancelación, bloqueo, fuera de servicio, descuento y cortesía.
 
-Sirven para que la bitácora responda _por qué_ pasó algo, y no solo _qué_ pasó.
+Existen para que «por qué» deje de ser texto libre. Un hotel que escribe el motivo a mano no puede contar cuántas cancelaciones fueron sobreventa, y esa cuenta es la que dice si el problema está en el canal o en el mostrador. «Cambio de planes» y «cambió de planes» son el mismo hecho y dos filas distintas en cualquier informe.
+
+El ámbito no es una etiqueta de color: es lo que impide que un motivo de cancelación se ofrezca al bloquear una habitación. Se trabaja en pestañas, y cada una lleva la cuenta de los motivos vivos que tiene.
+
+**Pedir una explicación** se reserva a lo que alguien tendrá que justificar después —una cortesía sin nota es un descuadre sin autor—. Exigirla en todo convierte la nota en un «.» y la vacía de sentido, así que solo la cortesía nace pidiéndola.
+
+::: warning El ámbito no se cambia
+Un motivo ya usado se quedó escrito en cancelaciones y en partes cerrados. Moverlo de ámbito reescribiría el pasado, que es lo único que un catálogo de motivos no puede permitirse. Se desactiva y se crea el que corresponda.
+:::
+
+Un ámbito sin motivos activos no es un catálogo pequeño: es el «por qué» otra vez en texto libre, porque quien tenga que explicar algo no tendrá nada que elegir. La pantalla lo avisa en rojo.
+
+El mismo nombre sí vale en dos ámbitos distintos: «Mantenimiento programado» es un motivo razonable para bloquear una habitación y también para dejarla fuera de servicio.
 
 ## Usuarios y roles
 
