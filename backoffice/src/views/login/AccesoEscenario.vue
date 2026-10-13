@@ -1,248 +1,454 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import FormularioAcceso from '@/components/acceso/FormularioAcceso.vue'
 import KarmaLogo from '@/components/marca/KarmaLogo.vue'
 import MarcaAlba from '@/components/marca/MarcaAlba.vue'
+import KmIcono from '@/components/ui/KmIcono.vue'
 import { marca } from '@/config/marca'
-
-/**
- * Variante «Escenario»: la fachada del hotel a media noche.
- *
- * En vez de una ilustración de archivo, la escena se dibuja con la propia
- * unidad de negocio: cada ventana es una habitación y su luz dice en qué
- * estado está. Es la misma rejilla que el usuario verá en el tablero, contada
- * como fachada, así que la pantalla de acceso ya enseña el producto.
- *
- * La vertical hermana usa este mismo armazón con su unidad: allí las celdas
- * son mesas de un salón. De ahí el aire de familia entre ambas.
- */
-
-type Estado = 'ocupada' | 'libre' | 'limpieza'
-
-const FILAS = 4
-const COLUMNAS = 11
-
-/**
- * Patrón fijo, no aleatorio: una fachada que cambia en cada recarga parece un
- * error, y además impediría comparar capturas entre despliegues. Se escribe en
- * una sola cadena —`o` ocupada, `l` libre, `c` en limpieza— para que ningún
- * formateador pueda desalinear las filas.
- */
-const PATRON = 'olooclooloo' + 'oolcooloolc' + 'looolcoolco' + 'ocolooolool'
-
-const mapa: Record<string, Estado> = { o: 'ocupada', l: 'libre', c: 'limpieza' }
-
-const ventanas = computed(() =>
-  Array.from({ length: FILAS * COLUMNAS }, (_, i) => {
-    const fila = Math.floor(i / COLUMNAS)
-    const columna = i % COLUMNAS
-    return {
-      id: `${fila}-${columna}`,
-      estado: mapa[PATRON[i] ?? 'l'] ?? 'libre',
-      // El encendido se escalona por diagonales: la fachada despierta, no parpadea.
-      retardo: `${(fila + columna) * 70}ms`,
-    }
-  }),
-)
-
-const leyenda: { estado: Estado; etiqueta: string }[] = [
-  { estado: 'ocupada', etiqueta: 'Ocupada' },
-  { estado: 'libre', etiqueta: 'Libre' },
-  { estado: 'limpieza', etiqueta: 'En limpieza' },
-]
+const modulos = ['Habitaciones', 'Reservas', 'Limpieza', 'Facturación']
 </script>
-
 <template>
-  <div class="grid h-full lg:grid-cols-[1.1fr_1fr]">
-    <!-- Escena -->
-    <div class="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex">
-      <div class="absolute inset-0 bg-[#080d16]" />
-      <div
-        class="absolute inset-x-0 top-0 h-2/3 opacity-60"
-        style="background: radial-gradient(60rem 30rem at 50% -20%, #0e3a96 0%, transparent 70%)"
-      />
-
-      <header class="relative flex items-center gap-3.5">
-        <MarcaAlba :tamano="44" />
+  <main class="acceso" data-theme="dark">
+    <section class="portada">
+      <header class="marca">
+        <MarcaAlba :tamano="42" />
         <div>
-          <p class="hs-display text-xl leading-none font-semibold text-[#f4f7fa]">
-            {{ marca.nombre }}
-          </p>
-          <p class="hs-etiqueta mt-1.5 text-[#22c9f2]">{{ marca.descriptor }}</p>
+          <p class="nombre">{{ marca.nombre }}</p>
+          <p class="descriptor">{{ marca.descriptor }}</p>
         </div>
       </header>
-
-      <!-- La fachada: una ventana por habitación. -->
-      <div class="relative my-6 flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+      <div class="presentacion">
         <div
-          class="acceso-fachada w-full max-w-[26rem] rounded-t-card border-x border-t border-white/10 px-4 pt-5 pb-0"
+          class="universo"
+          role="img"
+          aria-label="Habitaciones, reservas, limpieza y facturación conectadas en Alba"
         >
           <div
-            class="grid gap-[7px]"
-            :style="{ gridTemplateColumns: `repeat(${COLUMNAS}, minmax(0, 1fr))` }"
-            role="img"
-            :aria-label="`Fachada del hotel con ${FILAS * COLUMNAS} habitaciones en distintos estados`"
-          >
-            <span
-              v-for="v in ventanas"
-              :key="v.id"
-              class="acceso-ventana"
-              :class="`es-${v.estado}`"
-              :style="{ animationDelay: v.retardo }"
-            />
-          </div>
-
-          <!-- Zócalo: marquesina y puerta, para que la rejilla lea como edificio. -->
-          <div class="mt-4 flex items-end justify-center border-t border-white/10 pt-3">
-            <span class="acceso-puerta" aria-hidden="true" />
+            v-for="i in 3"
+            :key="i"
+            class="orbita"
+            :style="{ width: `${120 + i * 60}px`, height: `${120 + i * 60}px` }"
+          />
+          <div class="centro"><MarcaAlba :tamano="88" /></div>
+          <div v-for="(modulo, i) in modulos" :key="modulo" class="modulo" :class="`modulo-${i}`">
+            <p>
+              <KmIcono
+                :nombre="i === 0 ? 'estante' : i === 1 ? 'calendario' : i === 2 ? 'check' : 'caja'"
+                tamano="xs"
+              />{{ modulo }}
+            </p>
+            <div class="datos" :class="`datos-${i}`"><span /><span /><span /><span /></div>
           </div>
         </div>
-      </div>
-
-      <!-- Acera: el filete de la marca cierra la escena por abajo. -->
-      <div class="hs-filete relative" role="presentation" />
-
-      <div class="relative">
-        <h1
-          class="hs-display mt-8 max-w-sm text-[2.4rem] leading-[1.12] font-semibold text-[#f4f7fa]"
-        >
-          {{ marca.lema }}
-        </h1>
-
-        <ul class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
-          <li
-            v-for="l in leyenda"
-            :key="l.estado"
-            class="flex items-center gap-2 text-xs text-[#9aa6b6]"
-          >
-            <span class="acceso-punto" :class="`es-${l.estado}`" aria-hidden="true" />
-            {{ l.etiqueta }}
-          </li>
-        </ul>
-
-        <div class="mt-8 flex items-center gap-2.5">
-          <KarmaLogo :tamano="18" />
-          <p class="text-xs text-[#8593a6]">{{ marca.plataforma }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Acceso -->
-    <div class="flex items-center justify-center bg-panel p-6">
-      <div class="w-full max-w-sm">
-        <div class="mb-9 flex items-center gap-3 lg:hidden">
-          <MarcaAlba :tamano="40" />
-          <p class="hs-display text-lg leading-none font-semibold text-tinta">{{ marca.nombre }}</p>
-        </div>
-
-        <p class="hs-etiqueta text-turquesa-texto">Recepción</p>
-        <h2 class="hs-titulo-pagina mt-2 text-tinta">Abre tu turno</h2>
-        <p class="mt-2 text-sm text-tenue">
-          El hotel ya está despierto. Entra para ver cómo amaneció.
+        <p class="eyebrow">EL PULSO DE TU HOTEL</p>
+        <h1>Cada estancia.<br />Todo en <span>su lugar.</span></h1>
+        <p class="descripcion">
+          Recepción, habitaciones y personas conectadas<br />en un solo espacio de trabajo.
         </p>
-
-        <div class="mt-8">
-          <FormularioAcceso accion="Abrir turno" />
-        </div>
       </div>
-    </div>
-  </div>
+      <footer class="atribucion">
+        <KarmaLogo marca="novum" :tamano="26" /><span
+          >Una plataforma de <strong>Karma Novum</strong></span
+        ><span class="firma">CONEXIÓN · CONTROL · SERVICIO</span>
+      </footer>
+    </section>
+    <section class="panel" aria-label="Acceso al hotel">
+      <div class="tarjeta">
+        <header class="marca marca-tarjeta">
+          <MarcaAlba :tamano="40" />
+          <div>
+            <p class="nombre">{{ marca.nombre }}</p>
+            <p class="descriptor">ACCESO A TU HOTEL</p>
+          </div>
+        </header>
+        <p class="eyebrow">BIENVENIDO A TU HOTEL</p>
+        <h2>Todo empieza aquí.</h2>
+        <p class="introduccion">Ingresa a tu espacio de trabajo.</p>
+        <FormularioAcceso accion="Ingresar al hotel →" sobre-oscuro />
+        <p class="seguridad">
+          <KmIcono nombre="candado" tamano="xs" />Tu equipo. Tus accesos. Tu hotel.
+        </p>
+      </div>
+      <footer class="autor">
+        <KarmaLogo marca="systems" :tamano="21" /><span>Karma Systems</span
+        ><span>Desarrollo de sistemas</span>
+      </footer>
+    </section>
+  </main>
 </template>
-
 <style scoped>
-/*
- * La fachada se insinúa con un degradado vertical: arriba se funde con la
- * noche, abajo se apoya en la acera.
- */
-.acceso-fachada {
-  background: linear-gradient(180deg, rgb(17 24 39 / 0.2) 0%, rgb(17 24 39 / 0.9) 100%);
-  backdrop-filter: blur(2px);
+.acceso {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 1.02fr 1fr;
+  background: #0b1220;
+  color: var(--hs-text);
+  font-family: Inter, sans-serif;
 }
-
-.acceso-ventana {
-  display: block;
-  aspect-ratio: 2 / 3;
-  border-radius: 2px;
-  opacity: 0;
-  animation: acceso-encender 0.7s ease-out forwards;
+.portada {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 38px 44px 24px;
+  background: radial-gradient(ellipse at 48% 40%, #10203c 0%, #080d16 65%);
 }
-
-/* Ocupada: luz cálida detrás del cristal. */
-.acceso-ventana.es-ocupada {
-  background: linear-gradient(180deg, #22c9f2 0%, #1268ec 100%);
-  box-shadow: 0 0 10px -1px rgb(34 201 242 / 0.5);
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-
-/* Libre: el cristal refleja la noche. */
-.acceso-ventana.es-libre {
-  background: rgb(148 163 184 / 0.14);
-  border: 1px solid rgb(148 163 184 / 0.2);
+.nombre {
+  font-size: 22px;
+  font-weight: 650;
+  line-height: 1.2;
 }
-
-/* La entrada, iluminada bajo la marquesina. */
-.acceso-puerta {
-  width: 46px;
+.descriptor {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #9aa6b6;
+}
+.presentacion {
+  width: 100%;
+  max-width: 480px;
+  margin: 30px auto 55px;
+}
+.universo {
+  position: relative;
+  width: 360px;
+  height: 300px;
+  margin: 0 auto 32px;
+}
+.orbita {
+  position: absolute;
+  border: 1px solid rgb(34 201 242 / 7%);
+  border-radius: 50%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.centro {
+  position: absolute;
+  inset: 96px 126px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(34 201 242 / 20%);
+  border-radius: 25px;
+  background: linear-gradient(145deg, #172b46, #101a2b);
+  box-shadow: 0 0 60px rgb(18 104 236 / 12%);
+}
+.universo::before,
+.universo::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #22c9f2;
+  box-shadow: 0 0 12px #22c9f2;
+}
+.universo::before {
+  top: 12px;
+  left: 145px;
+}
+.universo::after {
+  bottom: 5px;
+  right: 105px;
+}
+.modulo {
+  position: absolute;
+  width: 110px;
+  height: 82px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgb(175 210 252 / 12%);
+  background: linear-gradient(145deg, #1b293e, #131d2e);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 16%);
+}
+.modulo p {
+  font-size: 12px;
+  color: #afd2fc;
+}
+.modulo-0 {
+  top: 38px;
+  left: 7px;
+  transform: rotate(-7deg);
+}
+.modulo-1 {
+  top: 40px;
+  right: 0;
+  transform: rotate(8deg);
+}
+.modulo-2 {
+  bottom: 20px;
+  left: 20px;
+  transform: rotate(-5deg);
+}
+.modulo-3 {
+  bottom: 14px;
+  right: 9px;
+  transform: rotate(6deg);
+}
+.datos {
+  display: flex;
+  align-items: end;
+  gap: 5px;
   height: 30px;
-  border-radius: 6px 6px 0 0;
-  background: linear-gradient(180deg, rgb(34 201 242 / 0.55) 0%, rgb(18 104 236 / 0.25) 100%);
-  box-shadow: 0 -6px 26px -4px rgb(34 201 242 / 0.5);
+  margin-top: 9px;
 }
-
-/* En limpieza: la luz de servicio, más tenue y en movimiento. */
-.acceso-ventana.es-limpieza {
-  background: rgb(34 201 242 / 0.28);
-  animation:
-    acceso-encender 0.7s ease-out forwards,
-    acceso-servicio 3.2s ease-in-out infinite 1.2s;
+.datos span {
+  width: 13px;
+  height: 12px;
+  border-radius: 2px;
+  background: #1268ec;
 }
-
-.acceso-punto {
-  width: 9px;
-  height: 9px;
-  border-radius: 3px;
-  display: inline-block;
+.datos-0 span:nth-child(2) {
+  height: 17px;
 }
-
-.acceso-punto.es-ocupada {
-  background: linear-gradient(180deg, #22c9f2 0%, #1268ec 100%);
+.datos-0 span:nth-child(3) {
+  height: 22px;
 }
-
-.acceso-punto.es-libre {
-  background: rgb(148 163 184 / 0.3);
-  border: 1px solid rgb(148 163 184 / 0.45);
+.datos-0 span:nth-child(4) {
+  height: 28px;
+  background: #22c9f2;
 }
-
-.acceso-punto.es-limpieza {
-  background: rgb(34 201 242 / 0.45);
+.datos-1 {
+  border-bottom: 2px solid #22c9f2;
+  background: linear-gradient(0deg, rgb(34 201 242 / 15%), transparent);
+  clip-path: polygon(0 65%, 30% 54%, 55% 60%, 80% 25%, 100% 10%, 100% 100%, 0 100%);
 }
-
-@keyframes acceso-encender {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.92);
+.datos-1 span {
+  display: none;
+}
+.datos-2 {
+  align-items: center;
+}
+.datos-2 span {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #4e9bf766;
+  background: #4e9bf726;
+}
+.datos-2 span:last-child {
+  display: none;
+}
+.datos-3 {
+  display: grid;
+  gap: 5px;
+  height: auto;
+  margin-top: 13px;
+}
+.datos-3 span {
+  width: 100%;
+  height: 3px;
+  background: #afd2fc26;
+}
+.datos-3 span:nth-child(2) {
+  width: 65%;
+}
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #22c9f2;
+}
+h1 {
+  margin: 18px 0;
+  font-size: clamp(36px, 3.5vw, 54px);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -2px;
+}
+h1 span {
+  color: #22c9f2;
+}
+.descripcion {
+  color: #9aa6b6;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.atribucion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #8593a6;
+  font-size: 14px;
+}
+.firma {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 1.7px;
+}
+.panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 28px;
+  background: #0e1523;
+  border-left: 1px solid rgb(175 210 252 / 5%);
+}
+.tarjeta {
+  position: relative;
+  width: 100%;
+  max-width: 410px;
+  padding: 34px 32px 30px;
+  border: 1px solid #263144;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #172032, #111827);
+  box-shadow: 0 25px 70px -30px #0008;
+}
+.tarjeta::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 26px;
+  width: 65px;
+  height: 2px;
+  background: linear-gradient(90deg, #22c9f2, transparent);
+}
+.marca-tarjeta {
+  padding-bottom: 23px;
+  margin-bottom: 27px;
+  border-bottom: 1px solid rgb(175 210 252 / 8%);
+}
+.marca-tarjeta .nombre {
+  font-size: 16px;
+}
+.marca-tarjeta .descriptor {
+  font-size: 8px;
+  letter-spacing: 1.5px;
+}
+.tarjeta .eyebrow {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+}
+h2 {
+  margin-top: 12px;
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -1px;
+}
+.introduccion {
+  margin: 8px 0 27px;
+  font-size: 14px;
+  color: #9aa6b6;
+}
+.seguridad {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid rgb(175 210 252 / 8%);
+  color: #8593a6;
+  font-size: 10px;
+  text-align: center;
+}
+.autor {
+  position: absolute;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #8593a6;
+  font-size: 13px;
+}
+.autor span:last-child {
+  margin-left: 12px;
+  color: #637086;
+}
+@media (max-width: 720px) {
+  .autor {
+    font-size: 11px;
+    gap: 8px;
   }
-  to {
-    opacity: 1;
-    transform: none;
+  .autor span:last-child {
+    margin-left: 4px;
   }
 }
-
-@keyframes acceso-servicio {
-  0%,
-  100% {
-    opacity: 1;
+@media (max-width: 1000px) {
+  .portada {
+    padding: 28px 25px 24px;
   }
-  50% {
-    opacity: 0.45;
+  .universo {
+    transform: scale(0.85);
+    margin-bottom: 5px;
+    width: 340px;
+  }
+  .firma {
+    display: none;
+  }
+  h1 {
+    font-size: 38px;
   }
 }
-
-/* Quien pide menos movimiento ve la fachada encendida, sin transición. */
-@media (prefers-reduced-motion: reduce) {
-  .acceso-ventana,
-  .acceso-ventana.es-limpieza {
-    opacity: 1;
-    animation: none;
+@media (max-width: 760px) {
+  .acceso {
+    grid-template-columns: 1fr;
+  }
+  .portada {
+    display: none;
+  }
+  .panel {
+    min-height: 100svh;
+    padding: 45px 20px 75px;
+    border: 0;
+    background: radial-gradient(ellipse at 50% 0%, #10203c, #080d16 75%);
+  }
+  .tarjeta {
+    padding: 28px 24px 22px;
+  }
+}
+.tarjeta::after {
+  content: '';
+  position: absolute;
+  bottom: 25px;
+  left: -1px;
+  width: 2px;
+  height: 30px;
+  background: linear-gradient(#22c9f2, transparent);
+}
+.tarjeta :deep(form) {
+  gap: 22px;
+}
+.tarjeta :deep(input) {
+  min-height: 48px;
+  border-radius: 6px;
+  background: #29364a;
+}
+.tarjeta :deep(button[type='submit']) {
+  min-height: 49px;
+  border-radius: 6px;
+  margin-top: 8px;
+  justify-content: flex-start;
+  text-align: left;
+}
+.seguridad {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.modulo p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+}
+.modulo p :deep(svg) {
+  color: #22c9f2;
+}
+@media (min-width: 1100px) {
+  .presentacion {
+    max-width: 510px;
+    margin: 60px auto 65px;
+  }
+  .universo {
+    transform: scale(1.12);
+    margin-bottom: 48px;
+  }
+  h1 {
+    font-size: clamp(44px, 3.7vw, 62px);
   }
 }
 </style>

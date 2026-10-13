@@ -35,10 +35,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(email: string, password: string) {
+  async function login(nombreUsuario: string, password: string) {
     cargando.value = true
     try {
-      const sesion = await authService.login(email, password)
+      const sesion = await authService.login(nombreUsuario, password)
       usuario.value = sesion.usuario
       token.value = sesion.token
       setToken(sesion.token)

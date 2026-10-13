@@ -104,7 +104,7 @@ async function cerrarSesion() {
 
       <!-- Atribución de plataforma: la marca Karma se conserva y se muestra. -->
       <div class="flex items-center gap-2 border-t border-linea bg-panel-2 px-4 py-2.5">
-        <KarmaLogo :tamano="18" />
+        <KarmaLogo marca="systems" :tamano="18" />
         <span class="text-[11px] text-tenue">{{ marca.plataforma }}</span>
       </div>
     </div>

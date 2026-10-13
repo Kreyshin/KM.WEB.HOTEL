@@ -56,6 +56,6 @@ const vista = computed(() => componentes[variante.value])
 <template>
   <div class="h-full">
     <component :is="vista" />
-    <SelectorVariante v-model="variante" />
+    <SelectorVariante v-if="route.query.variantes === '1'" v-model="variante" />
   </div>
 </template>

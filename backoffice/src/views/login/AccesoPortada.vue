@@ -68,7 +68,7 @@ import { marca } from '@/config/marca'
 
       <!-- La pertenencia a la plataforma se mantiene explícita. -->
       <div class="relative flex items-center gap-2.5">
-        <KarmaLogo :tamano="20" />
+        <KarmaLogo marca="systems" :tamano="20" />
         <p class="text-xs text-[#8593a6]">{{ marca.plataforma }}</p>
       </div>
     </div>

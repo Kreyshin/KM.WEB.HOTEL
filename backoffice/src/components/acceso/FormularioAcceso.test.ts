@@ -19,19 +19,28 @@ describe('formulario de acceso', () => {
   it('exige la contraseña antes de llamar al servicio', async () => {
     const { usuario } = renderizar(FormularioAcceso)
 
-    await usuario.clear(screen.getByLabelText(/contraseña/i))
+    await usuario.clear(screen.getByLabelText(/contraseña/i, { selector: 'input' }))
     await usuario.click(screen.getByRole('button', { name: 'Entrar' }))
 
     expect(await screen.findByText('Ingresa tu contraseña.')).toBeInTheDocument()
   })
 
-  it('las cuentas de prueba rellenan el correo', async () => {
+  it('las cuentas de prueba rellenan el usuario', async () => {
     const { usuario } = renderizar(FormularioAcceso)
-    const correo = screen.getByLabelText(/correo/i) as HTMLInputElement
+    const campoUsuario = screen.getByLabelText(/usuario/i) as HTMLInputElement
 
+    await usuario.click(screen.getByText('Probar con una cuenta demo'))
     await usuario.click(screen.getByRole('button', { name: 'Gobernanta' }))
 
-    expect(correo.value).toBe('rosa@albahoteles.pe')
+    expect(campoUsuario.value).toBe('rosa')
+    expect(campoUsuario.type).toBe('text')
+  })
+
+  it('exige el usuario antes de llamar al servicio', async () => {
+    const { usuario } = renderizar(FormularioAcceso)
+    await usuario.clear(screen.getByLabelText(/usuario/i))
+    await usuario.click(screen.getByRole('button', { name: 'Entrar' }))
+    expect(await screen.findByText('Ingresa tu usuario.')).toBeInTheDocument()
   })
 
   it('la acción del botón la decide la variante que lo envuelve', () => {

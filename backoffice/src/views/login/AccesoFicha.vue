@@ -59,7 +59,7 @@ const anio = new Date().getFullYear()
         >
           <span class="font-mono text-[11px] tracking-widest text-tenue">N.º {{ anio }}-0001</span>
           <span class="flex items-center gap-2">
-            <KarmaLogo :tamano="15" />
+            <KarmaLogo marca="systems" :tamano="15" />
             <span class="text-[11px] text-tenue">{{ marca.plataforma }}</span>
           </span>
         </footer>

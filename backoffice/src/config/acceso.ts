@@ -11,13 +11,13 @@ export type VarianteAcceso = (typeof variantesAcceso)[number]
 
 export const etiquetaVariante: Record<VarianteAcceso, string> = {
   portada: 'Portada',
-  escenario: 'Fachada',
+  escenario: 'Conexión',
   ficha: 'Llave',
 }
 
 export const descripcionVariante: Record<VarianteAcceso, string> = {
   portada: 'Manifiesto a la izquierda, formulario a la derecha.',
-  escenario: 'La fachada del hotel, con una ventana por habitación.',
+  escenario: 'Los módulos del hotel conectados, con una tarjeta de acceso.',
   ficha: 'El acceso dentro de una tarjeta-llave.',
 }
 
